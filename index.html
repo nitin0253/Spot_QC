@@ -345,10 +345,23 @@ tr:hover td{background:var(--bg2)}
 .av-6{background:#FFFBEB;color:#92400E}
 
 /* Base layout for the Video QA scoping container */
-.vqa-root{position:fixed;top:52px;bottom:30px;left:0;right:0;z-index:25;background:var(--bg);overflow:hidden;}
+/* z-index 40 sits ABOVE Spyne's topbar (z:30) so descendant overlays
+   (settings panel, reappend modal, toast) render above the topbar.
+   The topbar mode pills stay clickable because .vqa-root only covers
+   the area below the topbar (top:52px), so the two never overlap. */
+.vqa-root{position:fixed;top:52px;bottom:30px;left:0;right:0;z-index:40;background:var(--bg);}
 .vqa-root.hidden{display:none!important;}
 .vqa-root .screen{position:absolute!important;}
 .vqa-root .shell{height:100%!important;}
+/* Topbar buttons that should hide while on Video QA mode */
+body.vqa-mode .btn-qc-status,
+body.vqa-mode .topbar > a.btn-top-link,
+body.vqa-mode .topbar > .btn-sm:last-of-type,
+body.vqa-mode #doneCounter,
+body.vqa-mode .bottom-ribbon{display:none!important;}
+/* When on Video QA, give it the full bottom of the screen since
+   bottom-ribbon is hidden. */
+body.vqa-mode .vqa-root{bottom:0;}
 
 /* ── GRAY + BLUE THEME ── */
 .vqa-root {
@@ -1523,7 +1536,7 @@ tr:hover td{background:var(--bg2)}
 <div class="toast" id="toast"></div>
 </div>
 
-<div class="bottom-ribbon">Managed by <a href="mailto:kishor@spyne.ai">kishor@spyne.ai</a></div>
+<div class="bottom-ribbon">made with ♥ for us</div>
 <div class="toast-shelf" id="toastShelf"></div>
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
@@ -1891,12 +1904,14 @@ function setMode(m){
 
   // ─── VIDEO QA mode: hand off to the embedded module ───
   if (m === 'videoqa') {
+    document.body.classList.add('vqa-mode');
     _id('setupPage').style.display = 'none';
     _id('reviewPage').style.display = 'none';
     _id('doneCounter').style.display = 'none';
     if (window.VideoQA) window.VideoQA.activate(user);
     return;
   } else {
+    document.body.classList.remove('vqa-mode');
     if (window.VideoQA) window.VideoQA.deactivate();
     _id('doneCounter').style.display = '';
     _id('setupPage').style.display = 'flex';
@@ -2331,7 +2346,7 @@ function init() {
   // Use 'qa_gas_url_v2' so the old cached URL from previous deployments is ignored.
   // (The script's /exec URL changed when redeployed as a new deployment.)
   if (ls('qa_gas_url_v2'))   GAS_URL   = ls('qa_gas_url_v2');
-  if (ls('theme') === 'light') document.body.classList.add('light');
+  if (ls('theme') === 'light') { const _r = document.getElementById('videoQAContainer'); if (_r) _r.classList.add('light'); }
   applyFont(ls('qa_font') || 'geist');
   buildFontGrid();
   renderCFList();
@@ -2534,7 +2549,9 @@ async function loadAllData() {
 
     // Auto-prune stale local cache (see note in pruneLocalReviews)
     pruneLocalReviews();
-
+    /* clear any stale error from a previous failed load */
+    const _dbg = document.getElementById('entDebug');
+    if (_dbg) _dbg.textContent = '';
     return true;
   } catch(e) {
     console.error('[loadAllData] FAILED:', e, lastLoadError);
@@ -2905,7 +2922,7 @@ function renderEntList() {
       <div class="ent-row-right">
         ${lockedHtml}
         <span class="pill ${counts.pending>0?'pill-pending':(counts.done===counts.total?'pill-done':'pill-locked')}">${counts.pending} available</span>
-        <button class="claim-btn" onclick="claimBatch('${escAttr(name)}')" ${disabled?'disabled title="Nothing available right now"':''}>Start QA →</button>
+        <button class="claim-btn" onclick="vqa.claimBatch('${escAttr(name)}')" ${disabled?'disabled title="Nothing available right now"':''}>Start QA →</button>
       </div>
     </div>`;
   }).join('');
@@ -3251,7 +3268,7 @@ function renderChips() {
   if (!customFilters.length){sec.style.display='none';return;}
   sec.style.display='block';
   wrap.innerHTML=customFilters.map((f,i)=>
-    `<span class="chip${activeCF===i?' active':''}" onclick="applyCF(${i})">
+    `<span class="chip${activeCF===i?' active':''}" onclick="vqa.applyCF(${i})">
       ${escH(f.name)} <span class="x" onclick="event.stopPropagation();removeCF(${i})">✕</span>
     </span>`
   ).join('');
@@ -3285,7 +3302,7 @@ function renderList() {
     const shQA=v.qa_status&&v.qa_status.trim();
     const ds=lr?lr.action:shQA?v.qa_status:v.status;
     const b=badge(ds,!!lr,!!shQA);
-    return `<div class="vitem${i===currentIdx?' active':''}" id="vi-${i}" onclick="loadVideoAt(${i})">
+    return `<div class="vitem${i===currentIdx?' active':''}" id="vi-${i}" onclick="vqa.loadVideoAt(${i})">
       <div class="vitem-name">${escH(v.enterprise||'—')}</div>
       <div class="vbadge ${b.c}">${b.l}</div>
       <div class="vitem-id">${escH(v.video_id)}</div>
@@ -3686,7 +3703,7 @@ function renderSummary() {
         <td>${escH(lr.reviewer||'—')}</td>
         <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(lr.comment||'—')}</td>
         <td style="white-space:nowrap;">${ts}</td>
-        <td><button class="jmp" onclick="jumpTo('${escAttr(lr.video_id)}')">↗ Review</button></td>
+        <td><button class="jmp" onclick="vqa.jumpTo('${escAttr(lr.video_id)}')">↗ Review</button></td>
       </tr>`;
     }).join('');
 }
@@ -3766,7 +3783,7 @@ function saveColMap() {
 function buildFontGrid() {
   const cur=ls('qa_font')||'geist';
   document.getElementById('fontGrid').innerHTML=FONTS.map(f=>
-    `<div class="font-card${f.k===cur?' active':''}" onclick="pickFont('${f.k}')">
+    `<div class="font-card${f.k===cur?' active':''}" onclick="vqa.pickFont('${f.k}')">
       <div class="fn">${escH(f.lbl)}</div>
       <div class="fp" style="font-family:${f.fam}">${f.prev}</div>
     </div>`
@@ -3794,7 +3811,7 @@ function renderCFList() {
   el.innerHTML=customFilters.map((f,i)=>
     `<div class="saved-item">
       <div class="si-desc"><strong>${escH(f.name)}</strong> <span style="color:var(--text3);font-size:11px;">${escH(f.field)} = "${escH(f.value)}"</span></div>
-      <button class="btn-del" onclick="delCF(${i})">✕</button>
+      <button class="btn-del" onclick="vqa.delCF(${i})">✕</button>
     </div>`
   ).join('');
 }
@@ -3807,7 +3824,7 @@ function renderEmailMapUI() {
   el.innerHTML=e.map(([em,nm])=>
     `<div class="saved-item">
       <div class="si-desc"><span style="font-family:var(--mono);font-size:11px;">${escH(em)}</span> → <strong>${escH(nm)}</strong></div>
-      <button class="btn-del" onclick="delEmail('${escAttr(em)}')">✕</button>
+      <button class="btn-del" onclick="vqa.delEmail('${escAttr(em)}')">✕</button>
     </div>`
   ).join('');
 }
@@ -3848,9 +3865,13 @@ function clearCache() {
 //  THEME
 // ─────────────────────────────────────────────
 function toggleTheme() {
-  document.body.classList.toggle('light');
-  lsSet('theme', document.body.classList.contains('light')?'light':'dark');
-  document.getElementById('themeIco').textContent = document.body.classList.contains('light')?'🌙':'☀';
+  const _r = document.getElementById('videoQAContainer');
+  if (!_r) return;
+  _r.classList.toggle('light');
+  const isLight = _r.classList.contains('light');
+  lsSet('theme', isLight ? 'light' : 'dark');
+  const ico = document.getElementById('themeIco');
+  if (ico) ico.textContent = isLight ? '🌙' : '☀';
 }
 
 // ─────────────────────────────────────────────
@@ -3947,15 +3968,24 @@ document.addEventListener('visibilitychange', () => {
         try { init(); } catch (e) { console.error('[VideoQA] init failed:', e); }
         this._initialized = true;
       } else {
-        // Already initialized — refresh data on re-entry.
+        // Already initialized — refresh data AND restart polling on re-entry.
         try { if (typeof reloadData === 'function') reloadData(); } catch (e) {}
+        try { if (typeof startPolling === 'function') startPolling(); } catch (e) {}
       }
     },
     deactivate() {
       const root = document.getElementById('videoQAContainer');
       if (root) root.classList.add('hidden');
-      // Best-effort: stop polling so background fetches don't run while hidden.
+      // Stop polling so background fetches don't run while hidden.
       try { if (typeof stopPolling === 'function') stopPolling(); } catch (e) {}
+      // Clear any in-flight toast or button spinner so they don't reappear
+      // visually next time the panel is shown.
+      try {
+        const t = document.getElementById('toast');
+        if (t) t.classList.remove('show');
+        document.querySelectorAll('#videoQAContainer .spinning')
+          .forEach(el => el.classList.remove('spinning'));
+      } catch (e) {}
     },
   };
 })();
