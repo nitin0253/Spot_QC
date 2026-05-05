@@ -1,0 +1,3964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spyne QC</title>
+<link rel="icon" href="https://spyne-prod-ai.s3.us-east-1.amazonaws.com/ai-dataset/2025/logo/unnamed.png"/>
+<link rel="preconnect" href="https://media.spyneai.com" crossorigin>
+<link rel="dns-prefetch" href="https://media.spyneai.com">
+<link rel="preconnect" href="https://spyne-prod-ai.s3.us-east-1.amazonaws.com" crossorigin>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#D6E8FA; --bg1:#FFFFFF; --bg2:#F7F8FA; --bg3:#EEF0F4; --bg4:#E5E7EC;
+  --line:#E2E5EB; --line2:#CDD1DA; --accent:#2563EB; --accent2:#1D4ED8;
+  --accentg:rgba(37,99,235,.1); --accentlt:#EFF6FF; --ok:#16A34A;
+  --okg:rgba(22,163,74,.1); --oklt:#F0FDF4; --warn:#D97706; --warnlt:#FFFBEB;
+  --danger:#DC2626; --dangerg:rgba(220,38,38,.08); --dangerlt:#FEF2F2;
+  --t1:#0F1523; --t2:#374151; --t3:#6B7280; --t4:#9CA3AF; --r:8px; --rlg:12px;
+  --mono:'IBM Plex Mono',monospace; --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg0);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+.hidden{display:none!important}
+
+@keyframes tIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+@keyframes tOut{to{opacity:0;transform:translateX(-12px)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* ── LOGIN ── */
+#loginPage{height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg0);padding-bottom:30px}
+.login-card{width:390px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--rlg);padding:44px 40px 38px;box-shadow:var(--shadow-lg);animation:slideUp .35s cubic-bezier(.22,.68,0,1.2) both}
+.login-h{font-size:20px;font-weight:800;letter-spacing:-.03em;margin-bottom:4px;color:#000}
+.login-sub{font-size:13px;color:var(--t3);margin-bottom:28px}
+.field+.field{margin-top:15px}
+.field-lbl{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px;display:block}
+.field-in{width:100%;height:40px;padding:0 12px;background:var(--bg1);border:1px solid var(--line2);border-radius:var(--r);font-family:'Inter',sans-serif;font-size:14px;color:var(--t1);outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none}
+.field-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentg)}
+.login-err{display:none;margin-top:14px;padding:10px 12px;background:var(--dangerlt);border:1px solid #FCA5A5;border-radius:var(--r);font-size:13px;color:var(--danger)}
+.btn-login{width:100%;height:42px;background:var(--accent);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;border:none;border-radius:var(--r);cursor:pointer;transition:background .15s,box-shadow .15s,transform .1s;letter-spacing:.01em}
+.btn-login:hover{background:var(--accent2);box-shadow:0 4px 16px rgba(37,99,235,.35)}
+
+/* ── APP SHELL ── */
+#app{display:none;flex-direction:column;height:100vh;padding-bottom:30px}
+.topbar{height:52px;background:var(--bg1);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px;gap:8px;flex-shrink:0;z-index:30;box-shadow:var(--shadow)}
+.t-logo-img{height:28px; width:auto; display:block; margin-right:8px;}
+.mode-group{display:flex;background:var(--bg0);border:1px solid var(--line);border-radius:var(--r);padding:3px;gap:2px}
+.mode-pill{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:4px 13px;border:none;border-radius:6px;background:transparent;color:var(--t3);cursor:pointer;transition:all .14s;white-space:nowrap}
+.mode-pill.on{background:var(--bg1);color:var(--accent);font-weight:600;box-shadow:var(--shadow)}
+.t-space{flex:1}
+.t-chip{font-family:var(--mono);font-size:11px;color:var(--t3);background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:3px 9px;white-space:nowrap;display:flex;align-items:center}
+.t-chip.done-count{background:var(--oklt);color:var(--ok);border-color:var(--ok);font-weight:700}
+
+.t-avatar{width:28px;height:28px;background:var(--accentlt);border:1.5px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-right:6px}
+.t-uname{font-size:13px;font-weight:500;color:var(--t1)}
+
+.btn-sm{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;background:transparent;border:1px solid var(--line2);border-radius:6px;color:var(--t3);padding:0 11px;height:28px;cursor:pointer;transition:all .14s;display:flex;align-items:center;justify-content:center}
+.btn-top-link{text-decoration:none;background:var(--bg2);border-color:var(--line2);color:var(--t2); font-family:inherit;}
+.btn-top-link:hover{background:var(--accentlt);border-color:var(--accent);color:var(--accent)}
+
+/* ── SETUP PAGE ── */
+#setupPage{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.filter-bar{background:var(--bg1);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;flex-shrink:0}
+.fi-sel, .fi-in{font-family:'Inter',sans-serif;font-size:12px;color:var(--t1);background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;outline:none;cursor:pointer; height: 32px;}
+
+.range-box-container {
+    display: flex; align-items: center; background: var(--bg1); border: 1.5px solid var(--accent); border-radius: 6px; padding: 0 10px; height: 32px; gap: 8px; cursor: pointer; transition: box-shadow 0.2s;
+}
+.range-box-container label { font-size: 13px; font-weight: 700; color: #000; white-space: nowrap; margin-right: 4px; }
+.range-box-container input { border: none; background: transparent; font-size: 13px; color: var(--t2); outline: none; width: 170px; cursor: pointer; }
+
+.btn-start{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:0 18px;height:34px;cursor:pointer;transition:background .14s;display:flex;align-items:center;gap:6px}
+.btn-start:hover{background:var(--accent2)}
+
+/* ── DASHBOARD TABLE ── */
+.table-wrap{flex:1;overflow:auto;background:var(--bg1);margin:12px 18px;border-radius:var(--rlg);border:1px solid var(--line);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{position:sticky;top:0;background:#f8fafc;padding:12px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--accent);border-bottom:2px solid #edf2f7;z-index:5}
+td{padding:12px 16px;border-bottom:1px solid #edf2f7;font-size:13px;color:var(--t2)}
+tr:hover td{background:var(--bg2)}
+
+/* ── REVIEW PAGE ── */
+#reviewPage{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.rev-top{background:var(--bg1);border-bottom:1px solid var(--line);padding:0 18px;display:flex;align-items:stretch;overflow-x:auto;flex-shrink:0}
+.rmc{padding:9px 18px 9px 0;border-right:1px solid var(--line);margin-right:18px;flex-shrink:0;min-width:0;max-width:260px}
+.rmc-l{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#000;margin-bottom:2px}
+.rmc-v{font-family:var(--mono);font-size:11.5px;color:var(--t2);font-weight:400;overflow:hidden;text-overflow:ellipsis}
+
+.prog-row{background:var(--bg2);border-bottom:1px solid var(--line);padding:6px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.prog-track{flex:1;max-width:280px;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);transition:width .4s ease}
+
+.img-area{flex:1;display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;min-height:0}
+.img-area.two-col{grid-template-columns:1fr 1fr}
+.img-panel{position:relative;display:flex;flex-direction:column;background:#1A1C23;overflow:hidden;border-right:1px solid #2A2D38}
+.img-panel img{width:100%;height:100%;object-fit:contain;display:block;opacity:0;transition:opacity .15s ease;position:absolute;inset:0;image-rendering:auto;will-change:opacity}
+.img-panel img.loaded{opacity:1}
+.img-label{position:absolute;top:10px;left:10px;z-index:5;font-size:10.5px;font-weight:600;text-transform:uppercase;background:rgba(255,255,255,0.88);padding:3px 9px;border-radius:5px}
+.spin-frame{flex:1;width:100%;height:100%;border:none;background:#000}
+
+.rev-footer{background:var(--bg1);border-top:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0; position:relative; z-index:50}
+.issue-checkboxes{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.issue-cb-row{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg2);transition:background 0.2s}
+.issue-cb-row:has(.issue-cb:checked){background:var(--dangerlt);border-color:#FCA5A5;color:var(--danger);font-weight:600}
+.issue-cb-row.done-row:has(.issue-cb:checked){background:var(--oklt);border-color:var(--ok);color:var(--ok)}
+.issue-cb{display:none}
+.issue-cb-num{font-family:var(--mono);font-size:9.5px;font-weight:700;background:var(--bg4);border-radius:3px;padding:1px 4px;color:var(--t3);line-height:1}
+.issue-cb-row:has(.issue-cb:checked) .issue-cb-num{background:var(--danger);color:#fff}
+
+.btn-sub{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;background:var(--ok);color:#fff;border:none;border-radius:var(--r);padding:0 20px;height:38px;cursor:pointer}
+.btn-sub:disabled{background:var(--line2);cursor:not-allowed;color:var(--t3);opacity:0.8}
+.btn-prev{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;background:var(--bg1);border:1px solid var(--line2);padding:0 16px;height:38px;border-radius:var(--r);cursor:pointer}
+
+.comment-in{flex:1;height:38px;border-radius:6px;border:1px solid var(--line);padding:0 12px;font-size:13px; font-family:inherit; outline:none}
+.comment-in:focus{border-color:var(--accent)}
+
+.toast-shelf{position:fixed;bottom:35px;left:18px;z-index:999;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;font-size:12.5px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:8px;animation:tIn .22s ease both}
+.toast.ok{border-left:3px solid var(--ok)}
+.toast.err{border-left:3px solid var(--danger)}
+
+.bottom-ribbon {
+  position: fixed;
+  bottom: 0; left: 0; right: 0; height: 24px; background: var(--bg1); border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--t3); z-index: 1000;
+}
+.bottom-ribbon a { color: var(--accent); text-decoration: none; font-weight: 600; margin-left: 4px; }
+.bottom-ribbon a:hover { text-decoration: underline; }
+
+.load-strip{display:none;align-items:center;gap:10px;padding:9px 18px;background:var(--accentlt);border-bottom:1px solid var(--line);font-size:12.5px;font-weight:500;color:var(--accent);flex-shrink:0}
+.spin{width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:rot .7s linear infinite;flex-shrink:0}
+
+/* ── QC STATUS BUTTON ── */
+.btn-qc-status {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 14px;
+  height: 28px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(99,102,241,.3);
+}
+.btn-qc-status:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); box-shadow: 0 3px 10px rgba(99,102,241,.4); }
+
+/* ── QC STATUS MODAL ── */
+#qcStatusModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15,21,35,.45);
+  backdrop-filter: blur(3px);
+  animation: fadeIn .18s ease both;
+  padding: 16px;
+}
+#qcStatusModal.open { display: flex; }
+
+.qcs-card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 960px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: popIn .22s cubic-bezier(.22,.68,0,1.2) both;
+  overflow: hidden;
+}
+.qcs-header {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.qcs-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--t1);
+  flex: 1;
+}
+.qcs-week-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accentlt);
+  color: var(--accent);
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.qcs-close {
+  width: 28px; height: 28px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  background: var(--bg2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: var(--t3);
+  transition: all .14s;
+}
+.qcs-close:hover { background: var(--dangerlt); color: var(--danger); border-color: #FCA5A5; }
+
+.qcs-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--t3);
+  font-size: 13px;
+  padding: 40px;
+}
+
+.qcs-body { flex: 1; overflow-y: auto; padding: 14px 16px 20px; }
+
+.qcs-mode-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.qcs-mode-tab {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border: 1px solid var(--line2);
+  border-radius: 20px;
+  background: var(--bg2);
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .14s;
+}
+.qcs-mode-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.qcs-table-wrap { border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; overflow-y: hidden; width: 100%; }
+.qcs-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+.qcs-table th {
+  background: #f8fafc;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--accent);
+  border-bottom: 1.5px solid #edf2f7;
+  white-space: nowrap;
+}
+.qcs-table th:nth-child(2),
+.qcs-table th:nth-child(3) { text-align: center; width: 160px; }
+.qcs-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0f4f8;
+  font-size: 13px;
+  color: var(--t2);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.qcs-table td:nth-child(1) { width: auto; }
+.qcs-table td:nth-child(2),
+.qcs-table td:nth-child(3) { text-align: center; width: 160px; }
+.qcs-table tbody tr:last-child td { border-bottom: none; }
+.qcs-table tbody tr:hover td { background: var(--bg2); }
+
+.qcs-user-cell { display: flex; align-items: center; gap: 8px; }
+.qcs-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800;
+  flex-shrink: 0;
+}
+.qcs-total-badge {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accentlt);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+.qcs-rejected-badge {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+.qcs-rejected-badge.has-issues {
+  background: var(--dangerlt);
+  color: var(--danger);
+}
+.qcs-rejected-badge.no-issues {
+  background: var(--oklt);
+  color: var(--ok);
+}
+.qcs-footer-row td {
+  font-weight: 700;
+  background: #f8fafc !important;
+  border-top: 2px solid var(--line) !important;
+  color: var(--t1);
+}
+
+/* avatar colors */
+.av-0{background:#EEF2FF;color:#4338CA}
+.av-1{background:#FDF4FF;color:#7E22CE}
+.av-2{background:#ECFDF5;color:#065F46}
+.av-3{background:#FFF7ED;color:#9A3412}
+.av-4{background:#F0F9FF;color:#0369A1}
+.av-5{background:#FDF2F8;color:#9D174D}
+.av-6{background:#FFFBEB;color:#92400E}
+
+/* Base layout for the Video QA scoping container */
+.vqa-root{position:fixed;top:52px;bottom:30px;left:0;right:0;z-index:25;background:var(--bg);overflow:hidden;}
+.vqa-root.hidden{display:none!important;}
+.vqa-root .screen{position:absolute!important;}
+.vqa-root .shell{height:100%!important;}
+
+/* ── GRAY + BLUE THEME ── */
+.vqa-root {
+  --bg:       #1a1d21;
+  --surface:  #22262c;
+  --surface2: #2a2f37;
+  --surface3: #333b46;
+  --surface4: #3c4552;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --accent:   #3b82f6;
+  --accent2:  #60a5fa;
+  --text:     #e8ecf0;
+  --text2:    #94a3b8;
+  --text3:    #5a6578;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --yellow:   #f59e0b;
+  --purple:   #a855f7;
+  --blue:     #3b82f6;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Geist', sans-serif;
+  --font-body: var(--sans);
+  --sidebar-w: 56px;
+  --sidebar-open-w: 220px;
+}
+.vqa-root.light {
+  --bg:      #f0f4f8;
+  --surface: #ffffff;
+  --surface2:#edf2f7;
+  --surface3:#e2e8f0;
+  --surface4:#d8e2ed;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --text:    #111827;
+  --text2:   #4b5563;
+  --text3:   #9ca3af;
+}
+.vqa-root__noop_universal_drop{margin:0;padding:0;box-sizing:border-box;}
+.vqa-root__noop_body_drop{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  overflow:hidden;
+  transition:background .25s,color .25s;
+}
+
+/* ══════════ SCREENS ══════════ */
+.vqa-root .screen{
+  position:fixed;inset:0;z-index:200;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:12px;
+}
+.vqa-root .screen.hidden{display:none!important;}
+
+/* ── LOGIN ── */
+.vqa-root .login-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  padding:40px 44px;
+  width:360px;
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+.vqa-root .login-card h2{font-size:20px;font-weight:600;margin-bottom:4px;}
+.vqa-root .login-card p{color:var(--text2);font-size:13px;margin-bottom:24px;}
+.vqa-root .login-card input{
+  width:100%;padding:11px 14px;border-radius:9px;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text);font-size:13px;font-family:var(--font-body);
+  margin-bottom:10px;outline:none;transition:border .15s;
+}
+.vqa-root .login-card input:focus{border-color:var(--accent);}
+.vqa-root .btn-primary{
+  width:100%;padding:12px;background:var(--accent);color:#fff;
+  border:none;border-radius:9px;font-size:14px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;font-family:var(--font-body);
+}
+.vqa-root .btn-primary:hover{opacity:.88;}
+.vqa-root .name-hint{font-size:11px;color:var(--accent2);margin-top:-6px;margin-bottom:10px;cursor:pointer;display:none;}
+.vqa-root .name-hint:hover{text-decoration:underline;}
+.vqa-root .app-logo{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;}
+
+/* ── ENTERPRISE PICKER ── */
+.vqa-root .ent-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:18px;padding:24px 28px;width:640px;max-width:95vw;
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;gap:13px;
+  max-height:90vh;
+}
+.vqa-root .ent-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.vqa-root .ent-head h2{font-size:18px;font-weight:600;}
+.vqa-root .ent-head .sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.vqa-root .ent-head-actions{display:flex;gap:6px;flex-shrink:0;}
+.vqa-root .ent-head-btn{
+  padding:7px 12px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .15s;
+  font-family:var(--font-body);
+}
+.vqa-root .ent-head-btn:hover{border-color:var(--accent);color:var(--accent);}
+.vqa-root .ent-head-btn.danger:hover{border-color:var(--red);color:var(--red);}
+.vqa-root .ent-head-btn.spinning .ico{animation:spin .8s linear infinite;display:inline-block;}
+.vqa-root .ent-search-row{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.vqa-root .ent-search{
+  flex:1;padding:9px 13px;border-radius:9px;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text);font-size:13px;font-family:var(--font-body);
+  outline:none;transition:border .15s;
+}
+.vqa-root .ent-search:focus{border-color:var(--accent);}
+.vqa-root .ent-total{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;background:rgba(59,130,246,.08);
+  border:1px solid rgba(59,130,246,.18);border-radius:10px;
+  flex-shrink:0;
+}
+.vqa-root .ent-total .lbl{font-size:12px;color:var(--text2);}
+.vqa-root .ent-total .num{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent2);}
+.vqa-root .ent-list{
+  display:flex;flex-direction:column;gap:7px;
+  overflow-y:auto;flex:1;padding-right:4px;
+  min-height:200px;
+}
+.vqa-root .ent-list::-webkit-scrollbar{width:3px;}
+.vqa-root .ent-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.vqa-root .ent-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);cursor:pointer;transition:all .15s;gap:12px;
+  flex-shrink:0;
+}
+.vqa-root .ent-row:hover{border-color:var(--accent);background:var(--surface3);}
+.vqa-root .ent-row .name{font-size:13px;font-weight:500;}
+.vqa-root .ent-row .hint{font-size:11px;color:var(--text3);margin-top:2px;}
+.vqa-root .ent-row-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.vqa-root .pill{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:14px;font-weight:600;white-space:nowrap;}
+.vqa-root .pill-pending{background:rgba(59,130,246,.1);color:var(--accent2);}
+.vqa-root .pill-done   {background:rgba(34,197,94,.1); color:var(--green);}
+.vqa-root .pill-locked {background:rgba(245,158,11,.1);color:var(--yellow);}
+.vqa-root .claim-btn{
+  padding:6px 14px;background:var(--accent);color:#fff;
+  border:none;border-radius:7px;font-size:12px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap;
+}
+.vqa-root .claim-btn:hover{opacity:.85;}
+.vqa-root .claim-btn:disabled{opacity:.4;cursor:not-allowed;}
+.vqa-root .spinner-inline{
+  display:inline-block;width:11px;height:11px;
+  border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:-2px;margin-right:5px;
+}
+.vqa-root .ent-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;flex-shrink:0;}
+.vqa-root .link-btn{font-size:12px;color:var(--accent2);cursor:pointer;background:none;border:none;font-family:var(--font-body);}
+.vqa-root .link-btn:hover{text-decoration:underline;}
+.vqa-root .btn-outline{
+  padding:9px 20px;background:var(--accent);color:#fff;
+  border:none;border-radius:9px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;font-family:var(--font-body);
+}
+.vqa-root .btn-outline:hover{opacity:.88;}
+
+/* ══════════ OUTER SHELL ══════════ */
+.vqa-root .shell{display:flex;height:100vh;overflow:hidden;}
+
+/* ══════════ COLLAPSIBLE LEFT SIDEBAR ══════════ */
+.vqa-root .left-sidebar{
+  width:var(--sidebar-w);
+  flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  align-items:center;
+  padding:0 0 12px 0;
+  transition:width .22s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  position:relative;z-index:50;
+}
+.vqa-root .left-sidebar.open{width:var(--sidebar-open-w);}
+.vqa-root .sidebar-top{
+  display:flex;align-items:center;justify-content:center;
+  height:52px;width:100%;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  padding:0 12px;
+  cursor:pointer;gap:10px;
+  transition:background .15s;
+}
+.vqa-root .sidebar-top:hover{background:var(--surface2);}
+.vqa-root .hamburger{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.vqa-root .hamburger span{width:16px;height:1.5px;background:var(--text2);border-radius:2px;transition:all .2s;}
+.vqa-root .sidebar-logo{font-family:var(--mono);font-size:11px;color:var(--accent2);letter-spacing:1.5px;white-space:nowrap;overflow:hidden;opacity:0;transition:opacity .18s .04s;pointer-events:none;}
+.vqa-root .left-sidebar.open .sidebar-logo{opacity:1;}
+
+.vqa-root .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:2px;padding:10px 8px;width:100%;}
+.vqa-root .snav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:8px 10px;border-radius:8px;cursor:pointer;
+  transition:background .15s;white-space:nowrap;
+  border:none;background:none;color:var(--text2);font-family:var(--font-body);
+  font-size:13px;width:100%;text-align:left;
+}
+.vqa-root .snav-item:hover{background:var(--surface2);color:var(--text);}
+.vqa-root .snav-item.active{background:rgba(59,130,246,.15);color:var(--accent2);}
+.vqa-root .snav-item svg,.vqa-root .snav-item .sico{flex-shrink:0;width:18px;text-align:center;font-size:15px;}
+.vqa-root .snav-label{opacity:0;transition:opacity .18s .04s;font-size:13px;}
+.vqa-root .left-sidebar.open .snav-label{opacity:1;}
+
+.vqa-root .sidebar-bottom{display:flex;flex-direction:column;gap:2px;padding:0 8px 0;width:100%;}
+.vqa-root .sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+
+/* ══════════ MAIN AREA ══════════ */
+.vqa-root .main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ══════════ HEADER ══════════ */
+.vqa-root .header{
+  height:52px;display:flex;align-items:center;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  flex-shrink:0;position:relative;
+}
+.vqa-root .header-center{
+  position:absolute;left:50%;transform:translateX(-50%);
+  font-size:13px;font-weight:600;color:var(--text2);
+  font-family:var(--mono);letter-spacing:1px;white-space:nowrap;
+}
+.vqa-root .header-right{display:flex;align-items:center;gap:8px;margin-left:auto;padding:0 16px;}
+.vqa-root .batch-pill{
+  font-size:11px;padding:4px 10px;border-radius:14px;
+  background:rgba(59,130,246,.1);color:var(--accent2);
+  border:1px solid rgba(59,130,246,.2);font-family:var(--mono);
+  cursor:pointer;white-space:nowrap;transition:background .15s;
+}
+.vqa-root .batch-pill:hover{background:rgba(59,130,246,.18);}
+.vqa-root .queue-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;
+  font-size:11px;font-weight:500;font-family:var(--mono);
+  background:rgba(245,158,11,.1);color:var(--yellow);
+  border:1px solid rgba(245,158,11,.18);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.vqa-root .queue-badge:hover{background:rgba(245,158,11,.18);}
+.vqa-root .queue-badge.synced{background:rgba(34,197,94,.08);color:var(--green);border-color:rgba(34,197,94,.18);cursor:default;}
+.vqa-root .icon-btn{
+  width:30px;height:30px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  transition:all .15s;flex-shrink:0;
+}
+.vqa-root .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+.vqa-root .icon-btn.spinning{animation:spin .8s linear infinite;}
+
+/* ══════════ APP BODY ══════════ */
+.vqa-root .app-body{display:flex;flex:1;overflow:hidden;}
+
+/* ══════════ FILTER SIDEBAR ══════════ */
+.vqa-root .filter-sidebar{
+  width:260px;flex-shrink:0;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);background:var(--surface);overflow:hidden;
+}
+.vqa-root .filter-panel{padding:10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+.vqa-root .filter-panel input,.vqa-root .filter-panel select{
+  width:100%;padding:7px 11px;border-radius:7px;
+  border:1px solid var(--border);background:var(--surface2);
+  color:var(--text);font-size:12px;font-family:var(--font-body);outline:none;transition:border .15s;
+}
+.vqa-root .filter-panel input:focus,.vqa-root .filter-panel select:focus{border-color:var(--accent);}
+.vqa-root .filter-panel select option{background:var(--surface2);}
+.vqa-root .frow{display:flex;gap:7px;}
+.vqa-root .frow input{flex:1;}
+.vqa-root .btn-apply{
+  flex:1;padding:7px;background:var(--accent);color:#fff;
+  border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s;
+}
+.vqa-root .btn-apply:hover{opacity:.88;}
+.vqa-root .btn-clear{
+  flex:1;padding:7px;background:var(--surface3);color:var(--text2);
+  border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;
+}
+.vqa-root .date-tabs{display:flex;gap:4px;}
+.vqa-root .date-tab{
+  flex:1;padding:5px 3px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text3);font-size:11px;font-weight:500;
+  cursor:pointer;text-align:center;transition:all .15s;
+}
+.vqa-root .date-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* show QA'd toggle */
+.vqa-root .toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface2);
+  flex-shrink:0;
+}
+.vqa-root .toggle-row label{font-size:11px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:7px;}
+.vqa-root .tog{position:relative;width:30px;height:17px;flex-shrink:0;}
+.vqa-root .tog input{opacity:0;width:0;height:0;}
+.vqa-root .tog-slider{position:absolute;inset:0;background:var(--surface3);border-radius:17px;cursor:pointer;transition:all .18s;border:1px solid var(--border);}
+.vqa-root .tog-slider:before{content:'';position:absolute;height:11px;width:11px;left:2px;bottom:2px;background:var(--text3);border-radius:50%;transition:.18s;}
+.vqa-root input:checked+.tog-slider{background:var(--accent);border-color:var(--accent);}
+.vqa-root input:checked+.tog-slider:before{transform:translateX(13px);background:#fff;}
+
+/* custom chips */
+.vqa-root .chip-section{padding:7px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.vqa-root .chip{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:11px;
+  font-size:11px;background:rgba(59,130,246,.1);color:var(--accent2);
+  border:1px solid rgba(59,130,246,.18);margin:2px;cursor:pointer;transition:all .13s;
+}
+.vqa-root .chip:hover{background:rgba(59,130,246,.18);}
+.vqa-root .chip.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.vqa-root .chip .x{opacity:.55;font-size:10px;}
+
+/* video list */
+.vqa-root .video-list{flex:1;overflow-y:auto;min-height:0;}
+.vqa-root .video-list::-webkit-scrollbar{width:3px;}
+.vqa-root .video-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.vqa-root .list-empty{padding:36px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:1.6;}
+.vqa-root .vitem{
+  padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;
+  display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;
+  transition:background .12s;
+}
+.vqa-root .vitem:hover{background:var(--surface2);}
+.vqa-root .vitem.active{background:var(--surface3);border-left:2px solid var(--accent);}
+.vqa-root .vitem-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;grid-column:1;}
+.vqa-root .vitem-id{font-family:var(--mono);font-size:10px;color:var(--text3);grid-column:1;}
+.vqa-root .vitem-date{font-size:10px;color:var(--text3);grid-column:1;}
+.vqa-root .vbadge{
+  font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:9px;font-weight:600;
+  white-space:nowrap;grid-column:2;grid-row:1/4;align-self:center;
+}
+.vqa-root .b-verified{background:rgba(34,197,94,.1); color:var(--green);}
+.vqa-root .b-rejected{background:rgba(239,68,68,.1); color:var(--red);}
+.vqa-root .b-done    {background:rgba(59,130,246,.1);color:var(--accent2);}
+.vqa-root .b-pending {background:rgba(255,255,255,.06);color:var(--text3);}
+.vqa-root .b-qa      {background:rgba(59,130,246,.12);color:var(--accent2);}
+
+/* ══════════ MAIN CONTENT ══════════ */
+.vqa-root .content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.vqa-root .page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.vqa-root .page.active{display:flex;}
+
+/* REVIEW PAGE */
+.vqa-root .review-row{flex:1;display:flex;overflow:hidden;}
+.vqa-root .video-pane{
+  flex:1.5;display:flex;flex-direction:column;padding:14px;gap:10px;
+  border-right:1px solid var(--border);overflow:hidden;
+}
+.vqa-root .video-wrap{
+  flex:1;background:#000;border-radius:10px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;position:relative;min-height:0;
+}
+.vqa-root video{width:100%;height:100%;object-fit:contain;display:block;}
+.vqa-root .vid-nav{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.vqa-root .nav-btn{
+  padding:6px 14px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.vqa-root .nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.vqa-root .vid-ctr{font-family:var(--mono);font-size:11px;color:var(--text3);}
+
+/* META PANE */
+.vqa-root .meta-pane{
+  width:280px;flex-shrink:0;display:flex;flex-direction:column;
+  overflow-y:auto;padding:14px;gap:10px;
+}
+.vqa-root .meta-pane::-webkit-scrollbar{width:3px;}
+.vqa-root .meta-pane::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.vqa-root .m-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;}
+.vqa-root .m-box{padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface);}
+.vqa-root .m-box .cap{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.vqa-root .status-row{display:flex;align-items:center;gap:7px;}
+.vqa-root .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.vqa-root .stext{font-size:13px;font-weight:600;}
+.vqa-root .m-row{display:flex;flex-direction:column;gap:2px;margin-bottom:6px;}
+.vqa-root .m-key{font-size:10px;color:var(--text3);}
+.vqa-root .m-val{font-size:12px;color:var(--text);word-break:break-all;}
+.vqa-root .m-val.mono{font-family:var(--mono);font-size:11px;}
+.vqa-root .divider{height:1px;background:var(--border);flex-shrink:0;}
+
+/* ACTION BAR */
+.vqa-root .action-bar{
+  padding:11px 14px;background:var(--surface);border-top:1px solid var(--border);
+  display:flex;flex-direction:column;gap:9px;flex-shrink:0;
+}
+.vqa-root .action-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+.vqa-root .btn-approve{
+  padding:9px 20px;background:rgba(34,197,94,.1);color:var(--green);
+  border:1px solid rgba(34,197,94,.25);border-radius:9px;font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.vqa-root .btn-approve:hover{background:rgba(34,197,94,.18);}
+.vqa-root .btn-approve.sel{background:var(--green);color:#fff;border-color:var(--green);}
+.vqa-root .btn-reject{
+  padding:9px 20px;background:rgba(239,68,68,.08);color:var(--red);
+  border:1px solid rgba(239,68,68,.22);border-radius:9px;font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.vqa-root .btn-reject:hover{background:rgba(239,68,68,.15);}
+.vqa-root .btn-reject.sel{background:var(--red);color:#fff;border-color:var(--red);}
+.vqa-root .btn-clear-sel{
+  padding:9px 14px;background:var(--surface2);color:var(--text3);
+  border:1px solid var(--border);border-radius:9px;font-size:12px;
+  cursor:pointer;transition:all .15s;display:none;
+}
+.vqa-root .btn-clear-sel:hover{color:var(--text2);border-color:var(--border2);}
+.vqa-root .btn-clear-sel.show{display:block;}
+.vqa-root .btn-submit{
+  padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:9px;
+  font-size:13px;font-weight:600;cursor:pointer;margin-left:auto;transition:all .15s;
+  display:flex;align-items:center;gap:5px;min-width:120px;justify-content:center;
+}
+.vqa-root .btn-submit:hover:not(:disabled){opacity:.88;}
+.vqa-root .btn-submit:disabled{opacity:.3;cursor:not-allowed;}
+.vqa-root .btn-submit.loading{opacity:.7;cursor:wait;}
+.vqa-root .kbd{font-family:var(--mono);font-size:10px;padding:1px 4px;border:1px solid currentColor;border-radius:3px;opacity:.5;}
+.vqa-root .cmt-row{display:flex;gap:9px;align-items:flex-start;}
+.vqa-root .cmt-area{
+  flex:1;padding:9px 11px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--font-body);
+  resize:none;height:66px;outline:none;transition:border .15s;
+}
+.vqa-root .cmt-area:focus{border-color:var(--accent);}
+.vqa-root .reasons{display:flex;flex-wrap:wrap;gap:5px;max-width:260px;}
+.vqa-root .reason{
+  padding:5px 9px;border-radius:6px;border:1px solid rgba(239,68,68,.18);
+  background:rgba(239,68,68,.05);color:#f87171;font-size:11px;cursor:pointer;transition:all .13s;white-space:nowrap;
+}
+.vqa-root .reason:hover{background:rgba(239,68,68,.12);}
+.vqa-root .reason.active{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* ══════════ SUMMARY PAGE ══════════ */
+.vqa-root .sum-page{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;}
+.vqa-root .sum-page::-webkit-scrollbar{width:3px;}
+.vqa-root .sum-page::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.vqa-root .sum-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.vqa-root .sum-header h2{font-size:15px;font-weight:600;}
+.vqa-root .sum-filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.vqa-root .sum-filters select,.vqa-root .sum-filters input{
+  padding:6px 11px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font-body);outline:none;
+}
+.vqa-root .sum-filters select:focus,.vqa-root .sum-filters input:focus{border-color:var(--accent);}
+.vqa-root .sum-filters select option{background:var(--surface2);}
+.vqa-root .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+.vqa-root .kpi{
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:14px;display:flex;flex-direction:column;gap:5px;
+}
+.vqa-root .kpi .klbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;}
+.vqa-root .kpi .kval{font-size:24px;font-weight:700;font-family:var(--mono);}
+.vqa-root .kpi .ksub{font-size:10px;color:var(--text3);}
+.vqa-root .tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+.vqa-root .tbl-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.vqa-root .tbl-head span{font-size:13px;font-weight:500;}
+.vqa-root table{width:100%;border-collapse:collapse;}
+.vqa-root thead th{
+  padding:9px 13px;text-align:left;font-size:10px;font-weight:600;
+  color:var(--text3);text-transform:uppercase;letter-spacing:.7px;
+  background:var(--surface2);white-space:nowrap;
+}
+.vqa-root tbody tr{border-top:1px solid var(--border);transition:background .1s;}
+.vqa-root tbody tr:hover{background:var(--surface2);}
+.vqa-root tbody td{padding:9px 13px;font-size:12px;color:var(--text2);}
+.vqa-root tbody td.mono{font-family:var(--mono);font-size:11px;}
+.vqa-root .jmp{
+  padding:3px 9px;border-radius:5px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--accent2);font-size:11px;cursor:pointer;transition:all .12s;
+  text-decoration:none;display:inline-block;
+}
+.vqa-root .jmp:hover{border-color:var(--accent);background:rgba(59,130,246,.1);}
+.vqa-root .export-btn{
+  padding:6px 14px;border-radius:7px;background:var(--surface2);color:var(--text2);
+  border:1px solid var(--border);font-size:12px;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:5px;
+}
+.vqa-root .export-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ══════════ SETTINGS PANEL (slide-in) ══════════ */
+.vqa-root .settings-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+  display:flex;align-items:stretch;justify-content:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.vqa-root .settings-overlay.open{opacity:1;pointer-events:all;}
+.vqa-root .settings-panel{
+  width:500px;max-width:95vw;background:var(--surface);
+  border-left:1px solid var(--border2);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  height:100%;
+}
+.vqa-root .settings-overlay.open .settings-panel{transform:translateX(0);}
+.vqa-root .settings-panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.vqa-root .settings-panel-header h3{font-size:14px;font-weight:600;}
+.vqa-root .close-btn{
+  width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;
+}
+.vqa-root .close-btn:hover{border-color:var(--accent);color:var(--accent);}
+.vqa-root .settings-scroll{
+  flex:1;overflow-y:auto;padding:16px;
+  display:flex;flex-direction:column;gap:12px;
+  min-height:0;
+}
+.vqa-root .settings-scroll::-webkit-scrollbar{width:4px;}
+.vqa-root .settings-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.vqa-root .s-section{background:var(--surface2);border:1px solid var(--border);border-radius:11px;overflow:hidden;flex-shrink:0;}
+.vqa-root .s-section-head{
+  padding:11px 14px;font-size:12px;font-weight:600;color:var(--text2);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;
+}
+.vqa-root .s-body{padding:14px;display:flex;flex-direction:column;gap:11px;}
+.vqa-root .s-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.vqa-root .s-lbl{font-size:12px;color:var(--text);}
+.vqa-root .s-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.vqa-root .s-input{
+  padding:7px 11px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface3);color:var(--text);font-size:12px;font-family:var(--font-body);
+  outline:none;transition:border .15s;min-width:170px;width:100%;
+}
+.vqa-root .s-input:focus{border-color:var(--accent);}
+/* font grid */
+.vqa-root .font-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.vqa-root .font-card{
+  padding:11px 12px;border-radius:8px;border:2px solid var(--border);
+  background:var(--surface3);cursor:pointer;transition:all .15s;
+}
+.vqa-root .font-card:hover{border-color:var(--border2);}
+.vqa-root .font-card.active{border-color:var(--accent);background:rgba(59,130,246,.06);}
+.vqa-root .font-card .fn{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:4px;}
+.vqa-root .font-card .fp{font-size:14px;color:var(--text);}
+/* filter builder */
+.vqa-root .fb-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.vqa-root .fb-row select,.vqa-root .fb-row input{
+  padding:7px 10px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface3);color:var(--text);font-size:12px;font-family:var(--font-body);outline:none;
+}
+.vqa-root .btn-add{
+  padding:7px 14px;border-radius:7px;background:var(--accent);color:#fff;
+  border:none;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s;
+}
+.vqa-root .btn-add:hover{opacity:.88;}
+.vqa-root .saved-list{display:flex;flex-direction:column;gap:6px;}
+.vqa-root .saved-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;border-radius:7px;background:var(--surface3);border:1px solid var(--border);
+}
+.vqa-root .saved-item .si-desc{font-size:12px;}
+.vqa-root .btn-del{
+  padding:3px 9px;border-radius:5px;border:1px solid rgba(239,68,68,.18);
+  background:rgba(239,68,68,.05);color:var(--red);font-size:11px;cursor:pointer;
+}
+.vqa-root .btn-del:hover{background:rgba(239,68,68,.12);}
+/* qc map */
+.vqa-root .qc-map td{padding:5px 7px;font-size:12px;}
+.vqa-root .qc-map input{
+  padding:5px 9px;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface3);color:var(--text);font-size:12px;
+  font-family:var(--font-body);outline:none;width:100%;
+}
+.vqa-root .qc-map input:focus{border-color:var(--accent);}
+.vqa-root .btn-save{
+  padding:9px 22px;background:var(--accent);color:#fff;border:none;
+  border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;
+}
+.vqa-root .btn-save:hover{opacity:.88;}
+.vqa-root .settings-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+
+/* ══════════ MODAL ══════════ */
+.vqa-root .modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;
+  display:none;align-items:center;justify-content:center;
+}
+.vqa-root .modal-bg.open{display:flex;}
+.vqa-root .modal{
+  background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  padding:22px 26px;width:460px;max-width:95vw;
+  box-shadow:0 32px 64px rgba(0,0,0,.45);
+  display:flex;flex-direction:column;gap:12px;
+}
+.vqa-root .modal h3{font-size:15px;font-weight:600;}
+.vqa-root .modal p{font-size:12px;color:var(--text2);line-height:1.5;}
+.vqa-root .modal-input{
+  padding:9px 13px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);font-size:13px;
+  font-family:var(--mono);outline:none;width:100%;
+}
+.vqa-root .modal-input:focus{border-color:var(--accent);}
+.vqa-root .modal-result{
+  font-size:11px;color:var(--text2);background:var(--surface2);
+  border-radius:7px;padding:9px 11px;max-height:130px;overflow-y:auto;
+  font-family:var(--mono);white-space:pre-wrap;display:none;
+}
+.vqa-root .modal-footer{display:flex;gap:8px;justify-content:flex-end;}
+.vqa-root .btn-cancel{
+  padding:8px 18px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-size:13px;cursor:pointer;
+}
+.vqa-root .btn-ok{
+  padding:8px 18px;border-radius:8px;background:var(--accent);
+  color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;
+}
+
+/* ══════════ LOADING ══════════ */
+.vqa-root .load-over{
+  position:absolute;inset:0;background:rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;z-index:10;border-radius:10px;
+}
+.vqa-root .spin{width:26px;height:26px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+.vqa-root @keyframes spin{to{transform:rotate(360deg);}}
+.vqa-root .no-vid{color:var(--text3);text-align:center;}
+.vqa-root .no-vid span{font-size:28px;display:block;margin-bottom:7px;}
+
+/* ══════════ TOAST ══════════ */
+.vqa-root .toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);
+  padding:10px 20px;border-radius:9px;font-size:13px;font-weight:500;
+  pointer-events:none;transition:transform .25s cubic-bezier(.34,1.4,.64,1);
+  z-index:9999;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.4);
+}
+.vqa-root .toast.show{transform:translateX(-50%) translateY(0);}
+.vqa-root .toast.success{background:#166534;color:#fff;}
+.vqa-root .toast.error  {background:#991b1b;color:#fff;}
+.vqa-root .toast.info   {background:var(--accent);color:#fff;}
+.vqa-root .toast.warn   {background:#92400e;color:#fff;}
+
+/* scrollbars */
+.vqa-root__noop_scrollbar_drop{width:3px;height:3px;}
+.vqa-root__noop_scrollbar_drop{background:transparent;}
+.vqa-root__noop_scrollbar_drop{background:var(--border2);border-radius:3px;}
+
+/* REVIEWER BADGE */
+.vqa-root .rev-badge{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border-radius:8px;width:100%;overflow:hidden;
+}
+.vqa-root .rev-avatar{
+  width:26px;height:26px;border-radius:50%;background:var(--accent);
+  color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.vqa-root .rev-name{font-size:12px;color:var(--text2);opacity:0;transition:opacity .18s .04s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vqa-root .left-sidebar.open .rev-name{opacity:1;}
+
+/* Stats row */
+.vqa-root #statsRow{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="login-card">
+    <img src="https://spyne-prod-ai.s3.us-east-1.amazonaws.com/ai-dataset/2025/download.jpeg" style="height:38px; width:auto; margin-bottom:28px; display:block;" alt="Spyne Logo">
+    <div class="login-h">Welcome back</div>
+    <div class="login-sub">Sign in to QC Review</div>
+    <div class="login-err" id="loginErr">Incorrect name or password.</div>
+    <div class="field">
+      <label class="field-lbl">Your name</label>
+      <select id="loginName" class="field-in">
+        <option value="">— Select —</option>
+        <option>Nand Kishor</option><option>Ranbir Manoranjan</option><option>Nitin Kumar</option>
+        <option>Praveen Agarwal</option><option>Raj Tripathi</option><option>Rohit Chauhan</option><option>Ajay Devrani</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-lbl">Password</label>
+      <input type="password" id="loginPw" class="field-in" placeholder="Enter password"/>
+    </div>
+    <button class="btn-login" id="loginBtn" style="margin-top:20px">Sign in →</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <img src="https://spyne-prod-ai.s3.us-east-1.amazonaws.com/ai-dataset/2025/download.jpeg" class="t-logo-img" alt="Spyne">
+    <div class="mode-group">
+      <button class="mode-pill on" id="tabQC" onclick="setMode('qc')">QC Pass</button>
+      <button class="mode-pill" id="tabEdit" onclick="setMode('edited')">Re-Edit</button>
+      <button class="mode-pill" id="tabTool" onclick="setMode('qc_tool')">QC Tool</button>
+      <button class="mode-pill" id="tab360" onclick="setMode('360')">360</button>
+      <button class="mode-pill" id="tabVQA" onclick="setMode('videoqa')">Video QA</button>
+    </div>
+    <div class="t-space"></div>
+    <div class="t-chip done-count" id="doneCounter" style="margin-right:6px">Done: 0</div>
+    <button class="btn-qc-status" onclick="openQcStatus()" style="margin-right:6px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      QC Status
+    </button>
+    <a href="https://nandmodi.github.io/spot-qc/meet-review.html" target="_blank" class="btn-sm btn-top-link" style="margin-right:12px">Review</a>
+    
+    <div class="t-avatar" id="tAvatar">–</div>
+    <div class="t-uname" id="tUser" style="margin-right:12px">–</div>
+    
+    <button class="btn-sm" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div id="setupPage">
+    <div class="filter-bar">
+      <div id="cont360Filters" class="hidden" style="display:contents">
+        <label style="font-weight: 700; font-size: 13px;">Date Range</label>
+        <div class="range-box-container">
+          <input type="text" id="dateRange360" placeholder="Select Range">
+        </div>
+        <label style="font-weight: 700; font-size: 13px; margin-left: 8px;">User</label>
+        <select id="userFilter360" class="fi-sel"><option value="">All Users</option></select>
+        <label style="font-weight: 700; font-size: 13px; margin-left: 8px;">Enterprise</label>
+        <select id="entFilter360" class="fi-sel"><option value="">All Enterprises</option></select>
+        <label style="font-weight: 700; font-size: 13px; margin-left: 8px;">Issue Level</label>
+        <select id="issueFilter360" class="fi-sel">
+          <option value="">All Issues</option>
+          <option value="nullblank">None / Blank</option>
+          <option value="blocker">Blocker</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+
+      <div id="contStdFilters" style="display:contents">
+        <select id="entFilter" class="fi-sel"><option value="">All Enterprises</option></select>
+        <select id="qcUFilter" class="fi-sel"><option value="">All QC Users</option></select>
+      </div>
+
+      <div class="t-space"></div>
+      <span id="fcount" class="t-chip"></span>
+      <button class="btn-start" id="startBtn">▶ Start Review</button>
+    </div>
+    
+    <div class="load-strip" id="loadStrip"><div class="spin"></div><span id="loadTxt">Fetching data…</span></div>
+    
+    <div id="tableContainer" class="table-wrap hidden"></div>
+    <div id="emptySetupMsg" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--t4)">Select filters and click Start Review.</div>
+  </div>
+
+  <div id="reviewPage">
+    <div class="rev-top">
+      <div class="rmc"><div class="rmc-l">Enterprise</div><div class="rmc-v" id="mEnt">-</div></div>
+      <div class="rmc"><div class="rmc-l">SKU ID</div><div class="rmc-v" id="mSku">-</div></div>
+      <div class="rmc"><div class="rmc-l" id="labelImg">Image ID</div><div class="rmc-v" id="mImg">-</div></div>
+      <div class="rmc"><div class="rmc-l" id="labelUser">QC Users</div><div class="rmc-v" id="mQcUsers">-</div></div>
+      <div class="rmc hidden" id="mEditorWrap"><div class="rmc-l">Editor</div><div class="rmc-v" id="mEditor">-</div></div>
+      <div class="rmc hidden" id="mIssueWrap" style="color:var(--warn)"><div class="rmc-l">Previous Issue</div><div class="rmc-v" id="mIssue">-</div></div>
+    </div>
+    
+    <div class="prog-row">
+      <div id="progLbl" style="font-size:11px;font-weight:700">Record 1 of 0</div>
+      <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="img-area" id="imgArea">
+      <div class="img-panel"><div class="img-label">Input</div><img id="imgL" src="" alt="Input" decoding="async" loading="eager"/></div>
+      <div class="img-panel"><div class="img-label">AI Output</div><img id="imgM" src="" alt="Output" decoding="async" loading="eager"/></div>
+      <div class="img-panel" id="panelR"><div class="img-label">Final Output</div><img id="imgR" src="" alt="Final" decoding="async" loading="eager"/></div>
+    </div>
+
+    <div id="spinArea" class="hidden" style="flex:1; display:flex">
+      <iframe id="spinIframe" class="spin-frame"></iframe>
+    </div>
+
+    <div class="rev-footer">
+      <div style="flex:1">
+        <div id="standardIssues" class="issue-checkboxes">
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb1" value="RBG issue"><span class="issue-cb-num">1</span>RBG issue</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb2" value="See-through int"><span class="issue-cb-num">2</span>See-through int</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb3" value="See-through ext"><span class="issue-cb-num">3</span>See-through ext</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb4" value="Floor extension"><span class="issue-cb-num">4</span>Floor extension</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb5" value="Tilt"><span class="issue-cb-num">5</span>Tilt</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb6" value="Number Plate"><span class="issue-cb-num">6</span>Number Plate</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb7" value="Shadow"><span class="issue-cb-num">7</span>Shadow</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb8" value="Open-door RBG"><span class="issue-cb-num">8</span>Open-door RBG</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="cb9" value="Wrong Marking"><span class="issue-cb-num">9</span>Wrong Marking</label>
+        </div>
+        <div id="three60Issues" class="issue-checkboxes hidden">
+          <label class="issue-cb-row done-row"><input type="checkbox" class="issue-cb" id="qc360_done" name="qcReason" value="Done">Done</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="qc360_1" name="qcReason" value="Wrong QC"><span class="issue-cb-num">1</span>Wrong QC</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="qc360_2" name="qcReason" value="To Be Edited"><span class="issue-cb-num">2</span>To Be Edited</label>
+          <label class="issue-cb-row"><input type="checkbox" class="issue-cb" id="qc360_3" name="qcReason" value="Missing Issue Marking"><span class="issue-cb-num">3</span>Missing Issue Marking</label>
+          <input type="text" id="modalComment360" class="comment-in" placeholder="Add comments here (Submits as Other option)...">
+        </div>
+      </div>
+      
+      <label class="issue-cb-row done-row" id="doneLabel"><input type="checkbox" class="issue-cb" id="cbDone" value="Done">Done</label>
+      
+      <div style="display:flex;gap:8px">
+        <button class="btn-prev" id="prevBtn" disabled>← Prev</button>
+        <button class="btn-sub" id="nextBtn" onclick="handleFinalSubmit()">Submit & Next →</button>
+        <button class="btn-prev" onclick="exitToSetup()">Exit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QC STATUS MODAL -->
+<div id="qcStatusModal">
+  <div class="qcs-card">
+    <div class="qcs-header">
+      <div>
+        <div class="qcs-title">📊 QC Status</div>
+      </div>
+      <div class="qcs-week-badge" id="qcsWeekLabel">Week: —</div>
+      <button class="qcs-close" onclick="closeQcStatus()">✕</button>
+    </div>
+    <div class="qcs-body" id="qcsBody">
+      <div class="qcs-loading" id="qcsLoading">
+        <div class="spin"></div>
+        <span>Loading weekly data…</span>
+      </div>
+      <div id="qcsContent" class="hidden">
+        <div class="qcs-mode-tabs">
+          <button class="qcs-mode-tab active" id="qcsTabImg" onclick="switchQcsTab('img')">Images QC</button>
+          <button class="qcs-mode-tab" id="qcsTab360" onclick="switchQcsTab('360')">360 QC</button>
+        </div>
+        <div id="qcsImgTable"></div>
+        <div id="qcs360Table" class="hidden"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════ VIDEO QA — scoped container ════════════════ -->
+<div class="vqa-root hidden" id="videoQAContainer">
+<!-- ══════════ ENTERPRISE PICKER ══════════ -->
+<div class="screen hidden" id="entScreen">
+  <div class="app-logo">⬡ VIDEO QC REVIEW</div>
+  <div class="ent-card">
+    <div class="ent-head">
+      <div>
+        <h2>Home</h2>
+        <p class="sub">Pick an enterprise to start QA, or filter by user / verified status.</p>
+      </div>
+      <div class="ent-head-actions">
+        <button class="ent-head-btn" id="entSyncBtn" onclick="vqa.entSync()" title="Sync data from sheet">
+          <span class="ico">↻</span> Sync
+        </button>
+        <button class="ent-head-btn danger" onclick="vqa.logout()" title="Logout">
+          <span class="ico">⏻</span> Logout
+        </button>
+      </div>
+    </div>
+    <div class="ent-search-row">
+      <input class="ent-search" id="entSearch" placeholder="🔍 Search enterprises by name…" oninput="vqa.renderEntList()" autocomplete="off"/>
+    </div>
+    <div class="ent-search-row" style="gap:8px;">
+      <select class="ent-search" id="entFilterUser" onchange="vqa.renderEntList()" style="flex:1;">
+        <option value="">All QC Users</option>
+      </select>
+      <select class="ent-search" id="entFilterStatus" onchange="vqa.renderEntList()" style="flex:1;">
+        <option value="">All QC Verified Statuses</option>
+        <option value="verified">✓ Verified</option>
+        <option value="rejected">✗ Rejected</option>
+      </select>
+    </div>
+    <div class="ent-total" id="entTotalBox">
+      <span class="lbl" id="entTotalLbl">Total available pending QA</span>
+      <span class="num" id="entTotal">—</span>
+    </div>
+    <div class="ent-list" id="entList"><div style="padding:20px;text-align:center;color:var(--text3);">Loading…</div></div>
+    <div class="ent-footer">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <button class="link-btn" onclick="vqa.resetLocalCache()" style="color:var(--yellow);">⚠ Reset local cache</button>
+        <button class="link-btn" onclick="vqa.runDiagnostics()" style="color:var(--purple);">🔍 Run diagnostics</button>
+        <span id="entDebug" style="font-size:10px;color:var(--text3);font-family:var(--mono);"></span>
+      </div>
+      <button class="btn-outline" onclick="vqa.claimBatch(null)">Load All Pending →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN SHELL ══════════ -->
+<div class="shell">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="left-sidebar" id="leftSidebar">
+    <div class="sidebar-top" onclick="vqa.toggleSidebar()">
+      <div class="hamburger"><span></span><span></span><span></span></div>
+      <div class="sidebar-logo">QA DASH</div>
+    </div>
+
+    <div class="sidebar-nav">
+      <button class="snav-item active" id="snav-review" onclick="vqa.showPage('review')">
+        <span class="sico">▶</span><span class="snav-label">Review</span>
+      </button>
+      <button class="snav-item" id="snav-summary" onclick="vqa.showPage('summary')">
+        <span class="sico">◈</span><span class="snav-label">Summary</span>
+      </button>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-divider"></div>
+      <div class="rev-badge">
+        <div class="rev-avatar" id="revAvatar">—</div>
+        <div class="rev-name" id="revName">—</div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <button class="snav-item" id="snav-settings" onclick="vqa.showSettings()" style="display:none;">
+        <span class="sico">⚙</span><span class="snav-label">Settings</span>
+      </button>
+      <button class="snav-item" onclick="vqa.showEntScreen()">
+        <span class="sico">⌂</span><span class="snav-label">Home</span>
+      </button>
+      <button class="snav-item" onclick="vqa.toggleTheme()">
+        <span class="sico" id="themeIco">☀</span><span class="snav-label">Toggle Theme</span>
+      </button>
+      <button class="snav-item" onclick="vqa.logout()">
+        <span class="sico">⏻</span><span class="snav-label">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-center">QA DASHBOARD</div>
+      <div class="header-right">
+        <span class="batch-pill" id="batchPill" style="display:none" onclick="vqa.showEntScreen()">— batch</span>
+        <div class="queue-badge synced" id="queueBadge" onclick="vqa.flushQueue()">✓ Synced</div>
+        <button class="icon-btn" id="refreshBtn" onclick="vqa.reloadData()" title="Sync data from sheet">↻</button>
+      </div>
+    </div>
+
+    <!-- APP BODY -->
+    <div class="app-body">
+
+      <!-- FILTER SIDEBAR -->
+      <div class="filter-sidebar" id="filterSidebar">
+        <div id="statsRow"><span style="font-size:10px;color:var(--text3);">Loading…</span></div>
+
+        <div class="filter-panel">
+          <div class="date-tabs">
+            <div class="date-tab active" data-v="all"       onclick="vqa.setDate(this,'all')">All</div>
+            <div class="date-tab"        data-v="today"     onclick="vqa.setDate(this,'today')">Today</div>
+            <div class="date-tab"        data-v="yesterday" onclick="vqa.setDate(this,'yesterday')">Yesterday</div>
+            <div class="date-tab"        data-v="week"      onclick="vqa.setDate(this,'week')">7d</div>
+          </div>
+          <div id="fEntWrap"><select id="fEnt"><option value="">All Enterprises</option></select></div>
+          <select id="fUser"><option value="">All QC Users</option></select>
+          <select id="fStatus">
+            <option value="">All Statuses</option>
+            <option value="verified">✓ Verified</option>
+            <option value="rejected">✗ Rejected</option>
+            <option value="done">◉ Done</option>
+          </select>
+          <div class="frow">
+            <input id="fVid" placeholder="Video ID…"/>
+            <input id="fVin" placeholder="VIN…"/>
+          </div>
+          <input id="fSku" placeholder="SKU…"/>
+          <div class="frow">
+            <button class="btn-apply" onclick="vqa.applyFilter()">Apply</button>
+            <button class="btn-clear" onclick="vqa.clearFilters()">Clear</button>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <label>
+            <label class="tog">
+              <input type="checkbox" id="togQAed" onchange="vqa.applyFilter()"/>
+              <span class="tog-slider"></span>
+            </label>
+            Show only QA'd videos
+          </label>
+        </div>
+
+        <!-- Custom filter chips -->
+        <div class="chip-section" id="chipSection" style="display:none">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Quick Filters</div>
+          <div id="chips"></div>
+        </div>
+
+        <div class="video-list" id="videoList">
+          <div class="list-empty">Loading…</div>
+        </div>
+      </div>
+
+      <!-- CONTENT PAGES -->
+      <div class="content">
+
+        <!-- REVIEW PAGE -->
+        <div class="page active" id="page-review">
+          <div class="review-row">
+            <div class="video-pane">
+              <div class="vid-nav">
+                <button class="nav-btn" onclick="vqa.goPrev()">← Prev <span class="kbd">←</span></button>
+                <span class="vid-ctr" id="vidCtr">— / —</span>
+                <button class="nav-btn" onclick="vqa.goNext()">Next <span class="kbd">→</span></button>
+              </div>
+              <div class="video-wrap" id="videoWrap">
+                <div class="no-vid"><span>▶</span>Select a video</div>
+              </div>
+            </div>
+            <div class="meta-pane" id="metaPane">
+              <div class="m-label">Details</div>
+              <div style="font-size:12px;color:var(--text3);">Select a video from the list</div>
+            </div>
+          </div>
+          <div class="action-bar">
+            <div class="action-row">
+              <button class="btn-approve" id="btnApprove" onclick="vqa.toggleAction('Approved')">✓ Approve <span class="kbd">A</span></button>
+              <button class="btn-reject"  id="btnReject"  onclick="vqa.toggleAction('Rejected')">✗ Reject <span class="kbd">R</span></button>
+              <button class="btn-clear-sel" id="btnClearSel" onclick="vqa.clearAction()">✕ Clear</button>
+              <button class="btn-submit"  id="btnSubmit"  onclick="vqa.submitReview()" disabled>Submit <span class="kbd">↵</span></button>
+            </div>
+            <div class="cmt-row">
+              <textarea class="cmt-area" id="comment" placeholder="Add comment or rejection reason…"></textarea>
+              <div class="reasons" id="reasons" style="display:none">
+                <div class="reason" onclick="vqa.toggleReason(this,'Voiceover Issue')">Voiceover</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Wrong Issues Marking')">Wrong Issues Marking</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Background Music Issue')">Music</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Image removeBG Issue')">removeBG</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Transition Issue')">Transition</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Data Issue')">Data</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Image Selection Issue')">Image Selection</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Repeated Images')">Repeated Images</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUMMARY PAGE -->
+        <div class="page" id="page-summary">
+          <div class="sum-page">
+            <div class="sum-header">
+              <h2>QA Summary</h2>
+              <div class="sum-filters">
+                <select id="sumEnt"  onchange="vqa.renderSummary()"><option value="">All Enterprises</option></select>
+                <select id="sumRev"  onchange="vqa.renderSummary()"><option value="">All Reviewers</option></select>
+                <select id="sumAct"  onchange="vqa.renderSummary()">
+                  <option value="">All Actions</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+                <input id="sumFrom" type="date" onchange="vqa.renderSummary()"/>
+                <input id="sumTo"   type="date" onchange="vqa.renderSummary()"/>
+                <button class="export-btn" onclick="vqa.exportCSV()">⬇ Export CSV</button>
+              </div>
+            </div>
+            <div class="kpi-grid" id="kpiGrid"></div>
+            <div class="tbl-wrap">
+              <div class="tbl-head">
+                <span>Reviewed Videos</span>
+                <span id="sumCount" style="font-size:11px;color:var(--text3);font-family:var(--mono);">0 records</span>
+              </div>
+              <div style="overflow-x:auto;">
+                <table>
+                  <thead><tr><th>Video ID</th><th>Enterprise</th><th>VIN</th><th>Action</th><th>Reviewer</th><th>Comment</th><th>Timestamp</th><th></th></tr></thead>
+                  <tbody id="sumTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SETTINGS SLIDE-IN (admin only) ══════════ -->
+<div class="settings-overlay" id="settingsOverlay" onclick="vqa.closeSettings(event)">
+  <div class="settings-panel" onclick="event.stopPropagation()">
+    <div class="settings-panel-header">
+      <h3>⚙ Settings</h3>
+      <button class="close-btn" onclick="vqa.closeSettingsPanel()">✕</button>
+    </div>
+    <div class="settings-scroll">
+
+      <div class="s-section">
+        <div class="s-section-head">🔤 Font Style</div>
+        <div class="s-body"><div class="font-grid" id="fontGrid"></div></div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-head">🔗 QC Column Mapping</div>
+        <div class="s-body">
+          <p style="font-size:11px;color:var(--text3);">Map sheet column names to dashboard fields. Leave blank for defaults.</p>
+          <table class="qc-map" style="width:100%">
+            <tr><td style="color:var(--text2);width:130px;">QC Status column</td><td><input id="mapQcStatus" placeholder="e.g. verified_status"/></td></tr>
+            <tr><td style="color:var(--text2);">QC User column</td><td><input id="mapQcUser" placeholder="e.g. qc_user_email_id"/></td></tr>
+          </table>
+          <button class="btn-save" onclick="vqa.saveColMap()">Save Mapping</button>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-head">🎛 Custom Quick Filters</div>
+        <div class="s-body">
+          <div class="fb-row">
+            <input id="cfName" placeholder="Filter name" style="flex:1;min-width:110px;"/>
+            <select id="cfField">
+              <option value="status">Status</option>
+              <option value="enterprise">Enterprise</option>
+              <option value="qc_user">QC User</option>
+              <option value="dateFilter">Date</option>
+            </select>
+            <input id="cfVal" placeholder="Value" style="flex:1;min-width:90px;"/>
+            <button class="btn-add" onclick="vqa.addCF()">+ Add</button>
+          </div>
+          <div class="saved-list" id="cfList"></div>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-head">♻ Re-append QA Data</div>
+        <div class="s-body">
+          <p style="font-size:11px;color:var(--text3);">Force re-submit cached QA reviews to the sheet.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-save" style="background:rgba(168,85,247,.2);color:#c084fc;border:1px solid rgba(168,85,247,.3);" onclick="vqa.openReappend()">Open Re-append Tool</button>
+            <button class="btn-save" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);" onclick="vqa.clearCache()">Clear Local Cache</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-head">👤 Email → Name Lookup</div>
+        <div class="s-body">
+          <div id="emailMapList"></div>
+          <div style="display:flex;gap:7px;margin-top:4px;flex-wrap:wrap;">
+            <input id="newEmail" class="s-input" placeholder="email@co.com" style="flex:1;"/>
+            <input id="newName"  class="s-input" placeholder="Display name" style="flex:1;"/>
+            <button class="btn-add" onclick="vqa.addEmailMap()">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-head">⚙ Sheet & API Config</div>
+        <div class="s-body">
+          <div class="s-row">
+            <div style="flex-shrink:0;"><div class="s-lbl">Sheet CSV URL</div><div class="s-sub">Published CSV from Google Sheets</div></div>
+            <input id="cfgSheet" class="s-input" placeholder="https://docs.google.com/…"/>
+          </div>
+          <div class="s-row">
+            <div style="flex-shrink:0;"><div class="s-lbl">Apps Script URL</div><div class="s-sub">doPost endpoint</div></div>
+            <input id="cfgGas" class="s-input" placeholder="https://script.google.com/…"/>
+          </div>
+          <button class="btn-save" onclick="vqa.saveCfg()">Save Config</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="settings-footer">
+      <button class="btn-save" style="width:100%" onclick="vqa.closeSettingsPanel()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ RE-APPEND MODAL ══════════ -->
+<div class="modal-bg" id="reappendModal">
+  <div class="modal">
+    <h3>♻ Re-append QA Data</h3>
+    <p>Enter a Video ID to re-submit its cached review, or leave blank to re-submit all.</p>
+    <input class="modal-input" id="reappendId" placeholder="Video ID (blank = all)"/>
+    <div class="modal-result" id="reappendResult"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="vqa.closeReappend()">Cancel</button>
+      <button class="btn-ok" onclick="vqa.doReappend()">Re-submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+</div>
+
+<div class="bottom-ribbon">Managed by <a href="mailto:kishor@spyne.ai">kishor@spyne.ai</a></div>
+<div class="toast-shelf" id="toastShelf"></div>
+<iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+
+<script>
+const QC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSWW7muoNyeY_1VOLhybuT7ChNHtkhAscxDikyiCPQChIWqi1m3KXsd9e0_i_UFE7bDrW_7kfH-vIhL/pub?gid=1717039169&single=true&output=csv";
+const EDIT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSWW7muoNyeY_1VOLhybuT7ChNHtkhAscxDikyiCPQChIWqi1m3KXsd9e0_i_UFE7bDrW_7kfH-vIhL/pub?gid=320301246&single=true&output=csv";
+const THREE60_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vThoeXNovzUYQaHoFqHYY8p4hxrGTJWUPF8dQs0cinxvypfUVwAzFu74l06jhqXm0x611kRke13fa2t/pub?gid=0&single=true&output=csv';
+const DONE_COUNT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSWW7muoNyeY_1VOLhybuT7ChNHtkhAscxDikyiCPQChIWqi1m3KXsd9e0_i_UFE7bDrW_7kfH-vIhL/pub?gid=2128295653&single=true&output=csv";
+const DONE_COUNT_360_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThoeXNovzUYQaHoFqHYY8p4hxrGTJWUPF8dQs0cinxvypfUVwAzFu74l06jhqXm0x611kRke13fa2t/pub?gid=1009592102&single=true&output=csv";
+
+const FORM_STD = "https://docs.google.com/forms/d/e/1FAIpQLSdrjhynjWITfOqHpkgKX8enCmDKg1b3s0Ij05Cux36kPmZEUA/formResponse";
+const FORM_360 = 'https://docs.google.com/forms/d/e/1FAIpQLSeQH6R9-rYr1Kh2rwUBKu7uGvJAkRrvx8fnxF6jfkac7sNL2A/formResponse';
+
+const PROXY = "https://media.spyneai.com/unsafe/1280x0/filters:format(webp):quality(85)/";
+
+const FMAP = {
+  qc: { ent:'enterprise_name', img:'ai.image_id', sku:'sku_id', l:'input_image_hres_url', m:'output_image_hres_url', r:'manual_image_hres_url', u:'qc_user_name' },
+  edited: { ent:'enterprise_name', img:'ai.image_id', sku:'sku_id', l:'input_image_hres_url', m:'ai_output', r:'final_output', u:'last_qc_user' }
+};
+
+const AVATAR_COLORS = ['av-0','av-1','av-2','av-3','av-4','av-5','av-6'];
+
+let raw=[], group=[], idx=0, mode='qc', user='', fp360=null;
+let imagesLoaded = false, loadedCount = 0, currentDoneCount = 0;
+let safetyTimer = null;
+const preloadedIndices = new Set();
+const prefetchCache = new Set();
+
+// ── WEEK HELPERS ──
+function getCurrentWeekBounds() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun,1=Mon,...6=Sat
+  const diffToMonday = (day === 0) ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return { monday, sunday };
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+}
+
+function isInCurrentWeek(dateObj) {
+  if (!dateObj) return false;
+  const { monday, sunday } = getCurrentWeekBounds();
+  return dateObj >= monday && dateObj <= sunday;
+}
+
+function prefetch(src) {
+  if (!src || prefetchCache.has(src)) return;
+  prefetchCache.add(src);
+  const i = new Image(); i.src = src;
+}
+
+const PWDS = {"Nand Kishor":"spyne@123","Ranbir Manoranjan":"spyne@123","Nitin Kumar":"spyne@123","Praveen Agarwal":"spyne@123","Raj Tripathi":"spyne@123","Rohit Chauhan":"spyne@123","Ajay Devrani":"spyne@123"};
+
+function _id(id){ return document.getElementById(id); }
+
+function toast(msg, type='ok') {
+  const shelf = _id('toastShelf');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='ok'?'✓':'⚠'}</span><span>${msg}</span>`;
+  shelf.appendChild(t);
+  setTimeout(() => { t.style.animation = 'tOut .2s ease both'; setTimeout(() => t.remove(), 200); }, 2500);
+}
+
+function getRowVal(row, keysArray) {
+    if (!row) return '';
+    const keys = Object.keys(row);
+    if (!Array.isArray(keysArray)) keysArray = [keysArray];
+    for(let key of keysArray) {
+        const foundKey = keys.find(k => k.trim().toLowerCase() === key.toLowerCase());
+        if(foundKey && row[foundKey] !== undefined && row[foundKey] !== null) return row[foundKey].toString().trim();
+    }
+    return '';
+}
+
+function getShiftBoundaries() {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(7, 0, 0, 0);
+  if (now.getHours() < 7) { start.setDate(start.getDate() - 1); }
+  const end = new Date(start);
+  end.setDate(start.getDate() + 1);
+  return { start, end };
+}
+
+function parseGSheetTimestamp(str) {
+    if (!str) return null;
+    str = str.trim();
+    const parts = str.split(' ');
+    if (parts.length < 1) return null;
+    const dateParts = parts[0].split('/');
+    if (dateParts.length !== 3) return null;
+    const month = parseInt(dateParts[0]) - 1;
+    const day = parseInt(dateParts[1]);
+    const year = parseInt(dateParts[2]);
+    let h=0, m=0, s=0;
+    if (parts.length > 1) {
+        const timeParts = parts[1].split(':');
+        h = parseInt(timeParts[0]) || 0;
+        m = parseInt(timeParts[1]) || 0;
+        s = parseInt(timeParts[2]) || 0;
+    }
+    return new Date(year, month, day, h, m, s);
+}
+
+async function fetchProductionCount() {
+  if (!user) return;
+  const is360 = mode === '360';
+  try {
+    const countUrl = is360 ? DONE_COUNT_360_URL : DONE_COUNT_URL;
+    const response = await fetch(countUrl + (countUrl.includes('?') ? '&' : '?') + 'cb=' + Date.now());
+    if (!response.ok) return;
+    const csvData = await response.text();
+    const boundaries = getShiftBoundaries();
+    
+    Papa.parse(csvData, {
+      header: true, skipEmptyLines: true,
+      complete: res => {
+        const fields = res.meta.fields || [];
+        const findFlexKey = (name) => {
+            const needle = name.trim().toLowerCase().replace(/\s+/g, ' ');
+            return fields.find(k => k.trim().toLowerCase().replace(/\s+/g, ' ') === needle);
+        };
+        const userKey = is360
+          ? (findFlexKey('QC By') || findFlexKey('QC  By') || findFlexKey('Login User'))
+          : (findFlexKey('Login User'));
+        const tsKey = findFlexKey('Timestamp');
+
+        if (!userKey || !tsKey) return;
+        
+        const filteredEntries = res.data.filter(row => {
+          const rowUser = (row[userKey] || '').trim();
+          if (rowUser !== user) return false;
+          const rawTs = (row[tsKey] || '').trim();
+          const entryDate = parseGSheetTimestamp(rawTs);
+          return entryDate && entryDate >= boundaries.start && entryDate < boundaries.end;
+        });
+        
+        if (is360 === (mode === '360')) {
+          currentDoneCount = filteredEntries.length;
+          _id('doneCounter').textContent = `Done: ${currentDoneCount}`;
+        }
+      }
+    });
+  } catch (err) {}
+}
+
+// ── QC STATUS MODAL ──
+let qcsCurrentTab = 'img';
+let qcsImgData = null;
+let qcs360Data = null;
+
+function openQcStatus() {
+  _id('qcStatusModal').classList.add('open');
+  const { monday, sunday } = getCurrentWeekBounds();
+  _id('qcsWeekLabel').textContent = `Week: ${formatDate(monday)} – ${formatDate(sunday)}`;
+  _id('qcsLoading').classList.remove('hidden');
+  _id('qcsContent').classList.add('hidden');
+  qcsImgData = null;
+  qcs360Data = null;
+  qcsCurrentTab = 'img';
+  _id('qcsTabImg').classList.add('active');
+  _id('qcsTab360').classList.remove('active');
+  fetchQcsData();
+}
+
+function closeQcStatus() {
+  _id('qcStatusModal').classList.remove('open');
+}
+
+_id('qcStatusModal').addEventListener('click', function(e) {
+  if (e.target === this) closeQcStatus();
+});
+
+function switchQcsTab(tab) {
+  qcsCurrentTab = tab;
+  _id('qcsTabImg').classList.toggle('active', tab === 'img');
+  _id('qcsTab360').classList.toggle('active', tab === '360');
+  _id('qcsImgTable').classList.toggle('hidden', tab !== 'img');
+  _id('qcs360Table').classList.toggle('hidden', tab !== '360');
+}
+
+async function fetchQcsData() {
+  try {
+    const [imgResp, resp360] = await Promise.all([
+      fetch(DONE_COUNT_URL + '&cb=' + Date.now()),
+      fetch(DONE_COUNT_360_URL + '&cb=' + Date.now())
+    ]);
+    const [imgCsv, csv360] = await Promise.all([imgResp.text(), resp360.text()]);
+
+    // Parse Images QC data
+    await new Promise(resolve => {
+      Papa.parse(imgCsv, {
+        header: true, skipEmptyLines: true,
+        complete: res => {
+          qcsImgData = res.data;
+          resolve();
+        }
+      });
+    });
+
+    // Parse 360 QC data
+    await new Promise(resolve => {
+      Papa.parse(csv360, {
+        header: true, skipEmptyLines: true,
+        complete: res => {
+          qcs360Data = res.data;
+          resolve();
+        }
+      });
+    });
+
+    renderQcsTable();
+    _id('qcsLoading').classList.add('hidden');
+    _id('qcsContent').classList.remove('hidden');
+  } catch (err) {
+    _id('qcsLoading').innerHTML = '<span style="color:var(--danger)">⚠ Failed to load data. Please try again.</span>';
+  }
+}
+
+function flexFind(fields, name) {
+  const needle = name.trim().toLowerCase();
+  // 1. Exact match
+  let hit = fields.find(k => k.trim().toLowerCase() === needle);
+  if (hit) return hit;
+  // 2. Partial match
+  hit = fields.find(k => k.trim().toLowerCase().includes(needle));
+  return hit || null;
+}
+
+function renderQcsTable() {
+  const { monday, sunday } = getCurrentWeekBounds();
+
+  // ── IMAGES TABLE ──
+  // User      : column "qc-user"
+  // Timestamp : column "Timestamp"
+  // Rejected  : Total - count(rows where "Submit Issue" === "Done")
+  if (qcsImgData) {
+    const fields   = qcsImgData.length ? Object.keys(qcsImgData[0]) : [];
+    const userKey  = flexFind(fields, 'qc-user') || flexFind(fields, 'qc_user') || flexFind(fields, 'login user');
+    const tsKey    = flexFind(fields, 'timestamp');
+    const issueKey = flexFind(fields, 'submit issue');
+
+    const userStats = {};
+    qcsImgData.forEach(row => {
+      const rowUser = userKey ? (row[userKey] || '').trim() : '';
+      if (!rowUser) return;
+      const entryDate = parseGSheetTimestamp((tsKey ? row[tsKey] : '') || '');
+      if (!entryDate || entryDate < monday || entryDate > sunday) return;
+
+      if (!userStats[rowUser]) userStats[rowUser] = { total: 0, doneCount: 0 };
+      userStats[rowUser].total++;
+
+      if (issueKey) {
+        const val = (row[issueKey] || '').trim().toLowerCase();
+        if (val === 'done') userStats[rowUser].doneCount++;
+      }
+    });
+
+    // rejected = total - done
+    Object.values(userStats).forEach(s => { s.rejected = s.total - s.doneCount; });
+    _id('qcsImgTable').innerHTML = buildQcsHtml(userStats);
+  }
+
+  // ── 360 TABLE ──
+  // User      : column "User"
+  // Timestamp : column "Timestamp"
+  // Rejected  : Total - count(rows where "Reason" === "Done")
+  if (qcs360Data) {
+    const fields360  = qcs360Data.length ? Object.keys(qcs360Data[0]) : [];
+    const userKey360 = flexFind(fields360, 'user');
+    const tsKey360   = flexFind(fields360, 'timestamp');
+    const reasonKey  = flexFind(fields360, 'reason');
+
+    const userStats360 = {};
+    qcs360Data.forEach(row => {
+      const rowUser = userKey360 ? (row[userKey360] || '').trim() : '';
+      if (!rowUser) return;
+      const entryDate = parseGSheetTimestamp((tsKey360 ? row[tsKey360] : '') || '');
+      if (!entryDate || entryDate < monday || entryDate > sunday) return;
+
+      if (!userStats360[rowUser]) userStats360[rowUser] = { total: 0, doneCount: 0 };
+      userStats360[rowUser].total++;
+
+      if (reasonKey) {
+        const val = (row[reasonKey] || '').trim().toLowerCase();
+        if (val === 'done') userStats360[rowUser].doneCount++;
+      }
+    });
+
+    // rejected = total - done
+    Object.values(userStats360).forEach(s => { s.rejected = s.total - s.doneCount; });
+    _id('qcs360Table').innerHTML = buildQcsHtml(userStats360);
+  }
+}
+
+function buildQcsHtml(userStats) {
+  const users = Object.keys(userStats);
+  if (!users.length) {
+    return '<div style="text-align:center;padding:32px;color:var(--t4);font-size:13px">No data found for this week</div>';
+  }
+
+  // Sort by total desc
+  users.sort((a, b) => userStats[b].total - userStats[a].total);
+
+  let totalAll = 0, rejectedAll = 0;
+  users.forEach(u => { totalAll += userStats[u].total; rejectedAll += userStats[u].rejected; });
+
+  let rows = '';
+  users.forEach((u, i) => {
+    const s = userStats[u];
+    const initials = u.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const avClass = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const rejClass = s.rejected > 0 ? 'has-issues' : 'no-issues';
+    rows += `
+      <tr>
+        <td>
+          <div class="qcs-user-cell">
+            <div class="qcs-avatar ${avClass}">${initials}</div>
+            <span style="font-weight:500">${u}</span>
+          </div>
+        </td>
+        <td><span class="qcs-total-badge">${s.total.toLocaleString()}</span></td>
+        <td><span class="qcs-rejected-badge ${rejClass}">${s.rejected.toLocaleString()}</span></td>
+      </tr>`;
+  });
+
+  const totalRejClass = rejectedAll > 0 ? 'has-issues' : 'no-issues';
+
+  return `
+    <div class="qcs-table-wrap">
+      <table class="qcs-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Total Review</th>
+            <th>Rejected Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="qcs-footer-row">
+            <td><strong>Total</strong></td>
+            <td><span class="qcs-total-badge">${totalAll.toLocaleString()}</span></td>
+            <td><span class="qcs-rejected-badge ${totalRejClass}">${rejectedAll.toLocaleString()}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function setMode(m){
+  mode = m;
+  ['tabQC','tabEdit','tabTool','tab360','tabVQA'].forEach(id => { const el = _id(id); if (el) el.classList.remove('on'); });
+  const tabMap = { qc:'tabQC', edited:'tabEdit', qc_tool:'tabTool', '360':'tab360', videoqa:'tabVQA' };
+  const activeTabId = tabMap[m] || 'tabQC';
+  if (_id(activeTabId)) _id(activeTabId).classList.add('on');
+
+  // ─── VIDEO QA mode: hand off to the embedded module ───
+  if (m === 'videoqa') {
+    _id('setupPage').style.display = 'none';
+    _id('reviewPage').style.display = 'none';
+    _id('doneCounter').style.display = 'none';
+    if (window.VideoQA) window.VideoQA.activate(user);
+    return;
+  } else {
+    if (window.VideoQA) window.VideoQA.deactivate();
+    _id('doneCounter').style.display = '';
+    _id('setupPage').style.display = 'flex';
+  }
+
+  _id('contStdFilters').classList.toggle('hidden', m === '360');
+  _id('cont360Filters').classList.toggle('hidden', m !== '360');
+  _id('emptySetupMsg').classList.toggle('hidden', m === '360');
+  _id('tableContainer').classList.toggle('hidden', m !== '360');
+  _id('startBtn').classList.remove('hidden');
+
+  currentDoneCount = 0;
+  _id('doneCounter').textContent = 'Done: …';
+
+  exitToSetup();
+  raw = []; preloadedIndices.clear();
+  loadData();
+}
+
+async function loadData() {
+  setLoading(true);
+  const url = mode==='qc'?QC_URL:(mode==='360'?THREE60_URL:EDIT_URL);
+  try {
+    const response = await fetch(url + (url.includes('?')?'&':'?') + 'cb=' + Date.now());
+    const csvData = await response.text();
+    Papa.parse(csvData, {
+      header: true, skipEmptyLines: true,
+      complete: res => {
+        raw = res.data.map(r => {
+          if (mode === '360') {
+            const issueField = getRowVal(r, ['Issues', 'validation_failure_reason', 'vdp_validation_failure_reason']);
+            return { 
+                ...r, ent: getRowVal(r, 'Enterprise'), sku: getRowVal(r, 'SKU_ID'), img: getRowVal(r, 'Spin_ID'), 
+                issue: issueField, u: getRowVal(r, 'User'), spin_url: getRowVal(r, 'spin_url'), 
+                status: getRowVal(r, ['status', 'Status']), date: getRowVal(r, 'Date')
+            };
+          }
+          const isQc = mode === 'qc';
+          const map = isQc ? FMAP.qc : FMAP.edited;
+          return {
+            ent: getRowVal(r, map.ent), img: getRowVal(r, map.img), sku: getRowVal(r, map.sku),
+            l: getRowVal(r, map.l), m: getRowVal(r, map.m), r: getRowVal(r, map.r),
+            u: getRowVal(r, map.u) || 'N/A', editor: getRowVal(r, ['last_editor_user', 'editor']) || 'N/A',
+            fqc: getRowVal(r, 'first_qc_user') || 'N/A', lqc: getRowVal(r, 'last_qc_user') || 'N/A',
+            issue: isQc ? '' : getRowVal(r, 'rejected_comments'), 
+            status: getRowVal(r, ['status', 'Status']), action: getRowVal(r, 'latest_image_action')
+          };
+        });
+        fillFilters(); updateCount(); setLoading(false);
+        fetchProductionCount();
+      }
+    });
+  } catch (err) { toast('Error loading data', 'err'); setLoading(false); }
+}
+
+function fillFilters(){
+  const populate = (id, list) => {
+    const sel = _id(id); if (!sel) return;
+    sel.innerHTML = `<option value="">${sel.options[0].text}</option>` + [...new Set(list.filter(Boolean).map(s=>s.trim()))].sort().map(v => `<option value="${v}">${v}</option>`).join('');
+  };
+  if (mode === '360') {
+    populate('userFilter360', raw.map(r=>r.u));
+    populate('entFilter360', raw.map(r=>r.ent));
+  } else {
+    populate('entFilter', raw.map(r=>r.ent));
+    populate('qcUFilter', raw.map(r=>r.u));
+  }
+}
+
+function getFiltered(){
+  if (mode === '360') {
+    const dates = fp360 ? fp360.selectedDates : [];
+    const startStr = dates[0] ? dates[0].toISOString().split('T')[0] : null;
+    const endStr = dates[1] ? dates[1].toISOString().split('T')[0] : null;
+    const userF = _id('userFilter360').value;
+    const entF = _id('entFilter360').value;
+    const issueType = _id('issueFilter360').value.toLowerCase();
+    return raw.filter(row => {
+      if (row.status !== '' && row.status.toLowerCase() !== 'null') return false;
+      const rowDate = row.date;
+      if (startStr && rowDate < startStr) return false;
+      if (endStr && rowDate > endStr) return false;
+      if (userF && row.u !== userF) return false;
+      if (entF && row.ent !== entF) return false;
+      if (issueType) {
+        const rowIssues = (row.issue || '').toLowerCase();
+        if (issueType === 'nullblank') { if (rowIssues.length > 0) return false; }
+        else if (!rowIssues.includes(issueType)) return false;
+      }
+      return true;
+    });
+  } else {
+    const ent = _id('entFilter').value, qcu = _id('qcUFilter').value;
+    return raw.filter(r => {
+      if (r.status !== '' && r.status.toLowerCase() !== 'null') return false;
+      if (ent && r.ent !== ent) return false;
+      if (qcu && r.u !== qcu) return false;
+      if (mode === 'qc_tool') { if (r.action !== 'qc_editingtool') return false; }
+      else if (mode === 'edited') { if (r.action === 'qc_editingtool') return false; }
+      return true;
+    });
+  }
+}
+
+function updateCount(){
+  const filtered = getFiltered();
+  _id('fcount').textContent = filtered.length.toLocaleString() + ' records';
+  if (mode === '360') renderTable(filtered);
+}
+
+function renderTable(data) {
+  let html = `<table><thead><tr><th>Date</th><th>Spin ID</th><th>SKU</th><th>Issues</th><th>Enterprise</th><th>User</th></tr></thead><tbody>`;
+  data.slice(0, 500).forEach((row) => {
+    html += `<tr><td>${row.date}</td><td><code>${row.img}</code></td><td>${row.sku}</td><td>${row.issue}</td><td>${row.ent}</td><td>${row.u}</td></tr>`;
+  });
+  _id('tableContainer').innerHTML = html + '</tbody></table>';
+}
+
+function startReview(){
+  group = getFiltered().sort(() => Math.random() - 0.5);
+  if(!group.length) return alert('No records');
+  idx = 0; 
+  preloadedIndices.clear();
+
+  if (mode !== '360') {
+    for (let i = 0; i < Math.min(5, group.length); i++) {
+        const item = group[i];
+        prefetch(PROXY + item.l);
+        prefetch(PROXY + item.m);
+        if (mode !== 'qc') prefetch(PROXY + (item.r || item.m));
+        preloadedIndices.add(i);
+    }
+  }
+
+  _id('setupPage').style.display = 'none'; _id('reviewPage').style.display = 'flex';
+  showRecord();
+}
+
+function preloadFuture(count = 20) {
+  if (mode === '360') return;
+  for (let i = 1; i <= count; i++) {
+    const targetIdx = idx + i;
+    if (targetIdx >= group.length) break;
+    if (!preloadedIndices.has(targetIdx)) {
+      const item = group[targetIdx];
+      prefetch(PROXY + item.l);
+      prefetch(PROXY + item.m);
+      if (mode !== 'qc') prefetch(PROXY + (item.r || item.m));
+      preloadedIndices.add(targetIdx);
+    }
+  }
+}
+
+function enableSubmit() {
+    if (imagesLoaded) return;
+    imagesLoaded = true;
+    if (safetyTimer) clearTimeout(safetyTimer);
+    _id('nextBtn').disabled = false;
+    _id('nextBtn').textContent = "Submit & Next →";
+}
+
+function checkAllLoaded() {
+    if (safetyTimer) clearTimeout(safetyTimer);
+    safetyTimer = setTimeout(enableSubmit, 100);
+}
+
+function showRecord(){
+  const r = group[idx];
+  imagesLoaded = false; loadedCount = 0;
+  if (safetyTimer) clearTimeout(safetyTimer);
+  
+  _id('nextBtn').disabled = true; 
+  _id('nextBtn').textContent = "⌛ Loading...";
+
+  const is360 = mode === '360';
+  _id('imgArea').classList.toggle('hidden', is360);
+  _id('spinArea').classList.toggle('hidden', !is360);
+  _id('three60Issues').classList.toggle('hidden', !is360);
+  _id('standardIssues').classList.toggle('hidden', is360);
+  _id('doneLabel').classList.toggle('hidden', is360);
+
+  _id('mEnt').textContent = r.ent;
+  _id('mSku').textContent = r.sku;
+  _id('mImg').textContent = r.img;
+  _id('mQcUsers').textContent = [r.fqc, r.lqc, r.u].filter(u=>u&&u!=='N/A').join(', ');
+  _id('mEditor').textContent = r.editor;
+  _id('mEditorWrap').classList.toggle('hidden', !r.editor || mode === 'qc');
+  _id('mIssue').textContent = r.issue;
+  _id('mIssueWrap').classList.toggle('hidden', !r.issue);
+  _id('progLbl').textContent = `Record ${idx+1} of ${group.length}`;
+  _id('progFill').style.width = ((idx+1)/group.length*100) + '%';
+
+  if (is360) {
+    _id('spinIframe').src = r.spin_url;
+    _id('modalComment360').value = '';
+    checkAllLoaded();
+  } else {
+    const required = mode === 'qc' ? 2 : 3;
+    const imgs = [
+      { el: _id('imgL'), src: PROXY + r.l },
+      { el: _id('imgM'), src: PROXY + r.m },
+      ...(mode !== 'qc' ? [{ el: _id('imgR'), src: PROXY + (r.r || r.m) }] : [])
+    ];
+    
+    imgs.forEach(({ el, src }) => {
+      el.onload = () => { el.classList.add('loaded'); loadedCount++; if (loadedCount >= required) enableSubmit(); };
+      el.onerror = () => { loadedCount++; if (loadedCount >= required) enableSubmit(); };
+      
+      if (el.src !== src) {
+          el.classList.remove('loaded');
+          el.src = src;
+      } else if (el.complete) {
+          el.classList.add('loaded');
+          loadedCount++;
+          if (loadedCount >= required) enableSubmit();
+      }
+    });
+
+    checkAllLoaded();
+    
+    if(mode === 'qc'){ _id('panelR').style.display = 'none'; _id('imgArea').className = 'img-area two-col'; }
+    else { _id('panelR').style.display = 'flex'; _id('imgArea').className = 'img-area'; }
+  }
+  
+  _id('prevBtn').disabled = idx === 0;
+  document.querySelectorAll('.issue-cb').forEach(cb => cb.checked = false);
+  _id(is360?'qc360_done':'cbDone').checked = true;
+
+  preloadFuture(20);
+}
+
+function handleFinalSubmit() {
+    if (!imagesLoaded) return;
+    const r = group[idx];
+    const is360 = mode === '360';
+    const btn = _id('nextBtn');
+    
+    btn.disabled = true; 
+    btn.textContent = 'Submitting...';
+
+    const formUrl = is360 ? FORM_360 : FORM_STD;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = formUrl;
+    form.target = 'hidden_iframe';
+
+    const data = {};
+    if (is360) {
+        data['entry.703277665'] = r.sku || '';
+        data['entry.179295275'] = r.date || '';
+        data['entry.1125049159'] = r.img || '';
+        data['entry.575622617'] = r.issue || '';
+        data['entry.1815472287'] = r.ent || '';
+        data['entry.582537694'] = r.u || '';
+        data['entry.1372347436'] = r.spin_url || '';
+        data['entry.1243416507'] = user || '';
+        
+        const checkedBoxes = Array.from(document.querySelectorAll('#three60Issues .issue-cb:checked')).map(cb => cb.value);
+        checkedBoxes.forEach(val => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'entry.1751143375'; input.value = val;
+            form.appendChild(input);
+        });
+        
+        const comment = _id('modalComment360').value.trim();
+        if (comment) {
+            const other = document.createElement('input');
+            other.type = 'hidden'; other.name = 'entry.1751143375'; other.value = '__other_option__';
+            form.appendChild(other);
+            const otherVal = document.createElement('input');
+            otherVal.type = 'hidden'; otherVal.name = 'entry.1751143375.other_option_response'; otherVal.value = comment;
+            form.appendChild(otherVal);
+        }
+    } else {
+        data['entry.890284089'] = r.ent || '';
+        data['entry.5932044'] = [r.fqc, r.lqc, r.u].filter(x => x && x !== 'N/A').join(', ');
+        data['entry.1880389842'] = r.editor || '';
+        data['entry.1139236247'] = r.sku || '';
+        data['entry.661750446'] = r.img || '';
+        data['entry.1317530325'] = r.issue || '';
+        data['entry.1455673211'] = r.l || '';
+        data['entry.772576827'] = r.m || '';
+        data['entry.780536997'] = r.r || r.m;
+        data['entry.865196657'] = user || '';
+        
+        const checkedBoxes = Array.from(document.querySelectorAll('#standardIssues .issue-cb:checked, #doneLabel .issue-cb:checked')).map(cb => cb.value);
+        checkedBoxes.forEach(val => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'entry.778698303'; input.value = val;
+            form.appendChild(input);
+        });
+    }
+
+    for (const key in data) {
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = key; input.value = data[key];
+        form.appendChild(input);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+    
+    setTimeout(() => {
+        if (form.parentNode) document.body.removeChild(form);
+        afterSubmitActions();
+    }, 100);
+}
+
+function afterSubmitActions() {
+    toast('Submitted!'); 
+    currentDoneCount++;
+    _id('doneCounter').textContent = `Done: ${currentDoneCount}`;
+    if (idx < group.length - 1) { idx++; showRecord(); } 
+    else { alert('Review Finished.'); exitToSetup(); loadData(); }
+}
+
+function setLoading(s) { _id('loadStrip').style.display = s ? 'flex' : 'none'; }
+function exitToSetup(){ _id('reviewPage').style.display = 'none'; _id('setupPage').style.display = 'flex'; }
+function doLogout(){ location.reload(); }
+
+const doLogin = () => {
+    const name = _id('loginName').value, pw = _id('loginPw').value;
+    if(PWDS[name] === pw){
+        user = name; _id('tUser').textContent = name;
+        _id('tAvatar').textContent = name.split(' ').map(n=>n[0]).join('').toUpperCase();
+        _id('loginPage').style.display = 'none'; _id('app').style.display = 'flex';
+        setMode('qc');
+    } else _id('loginErr').style.display='block';
+};
+
+_id('loginBtn').onclick = doLogin;
+_id('loginPw').onkeydown = e => { if(e.key==='Enter') doLogin(); };
+
+document.querySelectorAll('.issue-cb').forEach(cb => {
+  cb.addEventListener('change', e => {
+    const is360 = mode === '360';
+    const doneId = is360 ? 'qc360_done' : 'cbDone';
+    if(e.target.id === doneId && e.target.checked) {
+        const q = is360 ? '#three60Issues .issue-cb:not(#qc360_done)' : '#standardIssues .issue-cb';
+        document.querySelectorAll(q).forEach(o => o.checked = false);
+        if(is360) _id('modalComment360').value = '';
+    } else if(e.target.checked) { _id(doneId).checked = false; }
+    else {
+        const others = is360 ? '#three60Issues .issue-cb:not(#qc360_done)' : '#standardIssues .issue-cb';
+        const checked = Array.from(document.querySelectorAll(others)).some(o=>o.checked);
+        if(!checked && (mode !== '360' || !_id('modalComment360').value)) _id(doneId).checked = true;
+    }
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (_id('reviewPage').style.display === 'flex') {
+    if (mode === '360') { if (e.key >= '1' && e.key <= '3') { const cb = _id('qc360_' + e.key); if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); e.preventDefault(); } } }
+    else { if (e.key >= '1' && e.key <= '9') { const cb = _id('cb' + e.key); if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); e.preventDefault(); } } }
+    if (e.key === 'Enter') { handleFinalSubmit(); e.preventDefault(); }
+    if (e.key === 'Backspace' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      if (idx > 0) { idx--; showRecord(); } e.preventDefault();
+    }
+  }
+});
+
+_id('startBtn').onclick = startReview;
+_id('prevBtn').onclick = () => { if(idx > 0) { idx--; showRecord(); } };
+
+window.onload = () => {
+    fp360 = flatpickr("#dateRange360", { mode: "range", dateFormat: "Y-m-d", defaultDate: null, onClose: () => updateCount() });
+};
+
+['userFilter360','entFilter360', 'issueFilter360', 'entFilter', 'qcUFilter'].forEach(id => {
+  const el = _id(id); if (el) el.addEventListener('change', updateCount);
+});
+</script>
+<script>
+/* ════════════════ VIDEO QA — IIFE module ════════════════ */
+(function () {
+  // ─── BEGIN ORIGINAL VIDEO QA SCRIPT (variables/functions stay private) ───
+
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+// Live data is fetched from the Apps Script endpoint (no longer the published CSV)
+// so claims/releases are reflected in real time.
+let GAS_URL   = "https://script.google.com/macros/s/AKfycbzDcFmycnU2nGt4A0FHeSlPPyiHWqQzouyU4gml4G6u9U_BeJ3PVT4ti8PU4cqz7Zey/exec";
+// Legacy: only used if GAS_URL is not configured (kept as fallback)
+let SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQviNsOTXM2LlIs5ipLiil6Nox9r6BH2o-7-WtgLbTKDIltzZlHXxnlWYm7KkJLfr1JsDM69wyevuT/pub?gid=846566121&single=true&output=csv";
+const CLAIM_TTL_MIN = 120;
+const ADMIN_EMAIL = "nitin.kumar@spyne.ai";
+// How often to poll for fresh data (ms)
+const POLL_INTERVAL_MS = 12000;
+
+const FONTS = [
+  {k:'geist',       lbl:'Geist',         fam:"'Geist',sans-serif",          prev:'Aa Bb 123'},
+  {k:'dm-sans',     lbl:'DM Sans',       fam:"'DM Sans',sans-serif",        prev:'Aa Bb 123'},
+  {k:'space-grot',  lbl:'Space Grotesk', fam:"'Space Grotesk',sans-serif",  prev:'Aa Bb 123'},
+  {k:'sora',        lbl:'Sora',          fam:"'Sora',sans-serif",           prev:'Aa Bb 123'},
+  {k:'outfit',      lbl:'Outfit',        fam:"'Outfit',sans-serif",         prev:'Aa Bb 123'},
+  {k:'ibm-plex',    lbl:'IBM Plex Sans', fam:"'IBM Plex Sans',sans-serif",  prev:'Aa Bb 123'},
+];
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let reviewer     = {name:'',email:''};
+let allVideos    = [];
+let videos       = [];
+let filtered     = [];
+let claimedIds   = new Set();
+let currentIdx   = -1;
+let currentAction= null;
+let dateFilter   = 'all';
+let localReviews = {};
+let submitQueue  = [];
+let customFilters= [];
+let activeCF     = null;
+let emailMap     = {};
+let colMap       = {qcStatus:'',qcUser:''};
+let currentPage  = 'review';
+let curEnterprise= null;
+let sidebarOpen  = false;
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+function init() {
+  localReviews  = JSON.parse(ls('qa_local_reviews')  || '{}');
+  submitQueue   = JSON.parse(ls('qa_submit_queue')   || '[]');
+  customFilters = JSON.parse(ls('qa_custom_filters') || '[]');
+  emailMap      = JSON.parse(ls('qa_email_name_map') || '{}');
+  colMap        = JSON.parse(ls('qa_column_map')     || '{"qcStatus":"","qcUser":""}');
+  claimedIds    = new Set(JSON.parse(ls('qa_claimed_ids') || '[]'));
+  if (ls('qa_sheet_url')) SHEET_URL = ls('qa_sheet_url');
+  // Use 'qa_gas_url_v2' so the old cached URL from previous deployments is ignored.
+  // (The script's /exec URL changed when redeployed as a new deployment.)
+  if (ls('qa_gas_url_v2'))   GAS_URL   = ls('qa_gas_url_v2');
+  if (ls('theme') === 'light') document.body.classList.add('light');
+  applyFont(ls('qa_font') || 'geist');
+  buildFontGrid();
+  renderCFList();
+  renderEmailMapUI();
+  loadCfgInputs();
+  updateQueueBadge();
+
+  const saved = ls('qa_reviewer');
+  if (saved) {
+    reviewer = JSON.parse(saved);
+    setReviewer();
+    showScreen('entScreen');
+    loadAllData().then(() => { buildEntList(); startPolling(); });
+  } else {
+    showScreen('loginScreen');
+  }
+}
+const ls = k => localStorage.getItem(k);
+const lsSet = (k,v) => localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+
+function isAdmin() {
+  return reviewer.email && reviewer.email.toLowerCase() === ADMIN_EMAIL;
+}
+
+function setReviewer() {
+  document.getElementById('revName').textContent  = reviewer.name;
+  document.getElementById('revAvatar').textContent= reviewer.name.charAt(0).toUpperCase();
+  // Show Settings only for the admin email
+  document.getElementById('snav-settings').style.display = isAdmin() ? '' : 'none';
+}
+function showScreen(id) {
+  ['entScreen'].forEach(s => {  /* loginScreen removed; host provides login */
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+function hideScreens() {
+  /* loginScreen removed */
+  document.getElementById('entScreen').classList.add('hidden');
+}
+
+// ─────────────────────────────────────────────
+//  SIDEBAR
+// ─────────────────────────────────────────────
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('leftSidebar').classList.toggle('open', sidebarOpen);
+}
+
+// ─────────────────────────────────────────────
+//  LOGIN — email + name only
+// ─────────────────────────────────────────────
+function doLogin() {
+  const name  = document.getElementById('loginName').value.trim();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  if (!name || !email) { toast('Enter name and email','error'); return; }
+  if (!email.includes('@')) { toast('Enter a valid email','error'); return; }
+  reviewer = {name, email};
+  lsSet('qa_reviewer', reviewer);
+  setReviewer();
+  showScreen('entScreen');
+  loadAllData().then(() => { buildEntList(); startPolling(); });
+}
+/* removed: loginEmail input handler (login screen is provided by host) */
+function acceptHint() {
+  const h=document.getElementById('nameHint');
+  if (h._n) { document.getElementById('loginName').value=h._n; h.style.display='none'; }
+}
+/* removed: loginEmail keydown handler */
+/* removed: loginName keydown handler */
+function logout() {
+  stopPolling();
+  // Release any claimed videos so others can pick them up
+  if (claimedIds.size > 0 && reviewer.email) {
+    postToSheet({action:'release', video_ids:[...claimedIds], reviewer:reviewer.email, timestamp:new Date().toISOString()});
+  }
+  localStorage.removeItem('qa_reviewer');
+  localStorage.removeItem('qa_claimed_ids');
+  location.reload();
+}
+
+// ─────────────────────────────────────────────
+//  CSV
+// ─────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  const split = row => {
+    const c=[]; let cur='',q=false;
+    for (let i=0;i<row.length;i++){
+      const ch=row[i];
+      if(ch==='"'){q=!q;}
+      else if(ch===','&&!q){c.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    c.push(cur.trim()); return c;
+  };
+  const hdr = split(lines[0]);
+  return lines.slice(1).map(line=>{
+    const c=split(line),o={};
+    hdr.forEach((h,i)=>{o[h.trim()]=(c[i]||'').replace(/^"|"$/g,'').trim();});
+    return o;
+  });
+}
+
+// ─────────────────────────────────────────────
+//  CLAIM HELPERS — multi-user safety
+// ─────────────────────────────────────────────
+function isLockedByOther(v) {
+  // Done videos aren't "locked" — they're done
+  if (v.qa_status && v.qa_status.trim()) return false;
+  if (v.qa_state === 'done') return false;
+
+  const claimedBy = (v.qa_claimed_by || '').trim().toLowerCase();
+  if (!claimedBy) return false;
+  if (reviewer.email && claimedBy === reviewer.email.toLowerCase()) return false;
+  // If qa_state is in_progress, treat as locked regardless of timestamp parsing
+  // (server enforces TTL via expireStaleClaims trigger)
+  if (v.qa_state === 'in_progress') {
+    // Still respect the TTL on the client side as a fallback
+    const claimedAt = v.qa_claimed_at;
+    if (!claimedAt) return true;
+    const t = new Date(claimedAt);
+    if (isNaN(t)) return true;
+    const ageMin = (Date.now() - t.getTime()) / 60000;
+    return ageMin < CLAIM_TTL_MIN;
+  }
+  // Legacy fallback: claimed_by set but no state column
+  const claimedAt = v.qa_claimed_at;
+  if (!claimedAt) return false;
+  const t = new Date(claimedAt);
+  if (isNaN(t)) return false;
+  const ageMin = (Date.now() - t.getTime()) / 60000;
+  return ageMin < CLAIM_TTL_MIN;
+}
+function lockOwner(v) {
+  return (v.qa_claimed_by || '').trim();
+}
+
+// ─────────────────────────────────────────────
+//  LOAD DATA — live from Apps Script (real-time)
+// ─────────────────────────────────────────────
+let lastLoadError = null;
+async function loadAllData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  const entBtn = document.getElementById('entSyncBtn');
+  if (entBtn) entBtn.classList.add('spinning');
+  lastLoadError = null;
+  try {
+    // Fetch live data from Apps Script (bypasses Google's published-CSV cache)
+    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=list&_t=' + Date.now();
+    let res;
+    try {
+      res = await fetch(url, { method: 'GET', redirect: 'follow' });
+    } catch (netErr) {
+      lastLoadError = 'Network error: ' + netErr.message + ' — likely CORS or connection block';
+      throw netErr;
+    }
+    if (!res.ok) {
+      lastLoadError = 'HTTP ' + res.status + ' from Apps Script';
+      throw new Error(lastLoadError);
+    }
+    let json;
+    try {
+      json = await res.json();
+    } catch (jsonErr) {
+      lastLoadError = 'Bad response (not JSON) — Apps Script likely returned an HTML error page';
+      throw jsonErr;
+    }
+    if (!json.ok) {
+      lastLoadError = 'Server error: ' + (json.error || 'unknown');
+      throw new Error(lastLoadError);
+    }
+
+    const rows = json.rows || [];
+    allVideos = rows.map(r => {
+      const qsKey = colMap.qcStatus || 'qc_user';
+      const quKey = colMap.qcUser   || 'qc_user_email_id';
+      return {
+        video_id:     r['v.video_id'] || r['video_id'] || '',
+        enterprise:   r['enterprise_name'] || '',
+        enterprise_id:r['v.enterprise_id'] || r['enterprise_id'] || '',
+        qc_user:      r[quKey] || r['qc_user_email_id'] || '',
+        qc_status:    r[qsKey] || r['qc_status'] || r['verified_status'] || '',
+        status:       String(r['verified_status'] || '').toLowerCase(),
+        reason:       r['rejected_reason'] || '',
+        vin:          r['vin_name'] || '',
+        sku:          r['sku_id'] || '',
+        url:          r['video_url'] || '',
+        created:      r['created_on'] || '',
+        updated:      r['updated_on'] || '',
+        qa_status:    r['qa_status'] || '',
+        qa_reason:    r['qa_reason'] || '',
+        qa_reviewer:  r['qa_reviewer'] || '',
+        qa_timestamp: r['qa_timestamp'] || '',
+        qa_claimed_by:r['qa_claimed_by'] || '',
+        qa_claimed_at:r['qa_claimed_at'] || '',
+        qa_state:     String(r['qa_state'] || '').toLowerCase(),
+      };
+    }).filter(v => v.video_id && v.url);
+
+    // Auto-prune stale local cache (see note in pruneLocalReviews)
+    pruneLocalReviews();
+
+    return true;
+  } catch(e) {
+    console.error('[loadAllData] FAILED:', e, lastLoadError);
+    // Show a longer-lasting visible error
+    const msg = lastLoadError || e.message || 'Failed to load live data';
+    toast(msg, 'error');
+    // Also bake into the debug line so it's visible after the toast disappears
+    const dbg = document.getElementById('entDebug');
+    if (dbg) dbg.textContent = '[error] ' + msg;
+    return false;
+  } finally {
+    btn.classList.remove('spinning');
+    if (entBtn) entBtn.classList.remove('spinning');
+  }
+}
+
+// Drop local cache entries that the server has clearly absorbed (no longer
+// needed locally) OR that are stale from old testing sessions (>5 minutes old
+// AND server still has no record). NEVER drop fresh entries — the server
+// write is async via no-cors fetch and can take many seconds to propagate.
+function pruneLocalReviews() {
+  if (!Object.keys(localReviews).length) return;
+  const sheetVids = new Map();
+  allVideos.forEach(v => sheetVids.set(v.video_id, v));
+  const STALE_MS = 5 * 60 * 1000; // 5 minutes
+  const now = Date.now();
+  let dropped = 0;
+  Object.keys(localReviews).forEach(vid => {
+    const lr = localReviews[vid];
+    const v = sheetVids.get(vid);
+    if (!v) return; // Not in current sheet snapshot — keep
+
+    const serverDone = (v.qa_state === 'done') || (v.qa_status && v.qa_status.trim());
+    if (serverDone) {
+      // Server has it: cache is redundant, drop it.
+      delete localReviews[vid];
+      dropped++;
+      return;
+    }
+
+    // Server doesn't have it. Don't drop unless this entry is genuinely stale.
+    const ts = lr && lr.timestamp ? Date.parse(lr.timestamp) : NaN;
+    if (!isNaN(ts) && (now - ts) > STALE_MS) {
+      // Old entry the server never absorbed — likely from an aborted submit.
+      // Move it to the retry queue so flushQueue() can try again later
+      // instead of just losing the review.
+      if (!submitQueue.some(q => q.video_id === vid)) {
+        submitQueue.push(lr);
+      }
+      delete localReviews[vid];
+      dropped++;
+    }
+  });
+  if (dropped > 0) {
+    lsSet('qa_local_reviews', localReviews);
+    lsSet('qa_submit_queue', submitQueue);
+    updateQueueBadge();
+    console.log('[prune] reconciled', dropped, 'local review entries');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  POLLING — keep dashboard in sync with the sheet
+// ─────────────────────────────────────────────
+let pollTimer = null;
+let isPolling = false;
+let lastClaimAt = 0; // timestamp of last successful claim — pause polls briefly after
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(pollTick, POLL_INTERVAL_MS);
+}
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+async function pollTick() {
+  // Don't stack up requests — skip if a previous poll is still running
+  if (isPolling) return;
+  // Don't poll if the user is mid-review with an unsaved decision
+  if (currentAction) return;
+  // Don't poll if the tab is hidden (saves quota)
+  if (document.hidden) return;
+  // Don't poll for 15 seconds after a claim — the server needs time to fully
+  // commit our writes, and a poll during that window can show stale claim
+  // state, causing counts to "change" right after the user lands on review.
+  if (Date.now() - lastClaimAt < 15000) return;
+
+  isPolling = true;
+  try {
+    const ok = await loadAllData();
+    if (!ok) return;
+
+    // Refresh whichever screen is currently visible
+    const onEntScreen = !document.getElementById('entScreen').classList.contains('hidden');
+    if (onEntScreen) {
+      buildEntList();
+      return;
+    }
+
+    // On main dashboard — refresh the working video list WITHOUT reloading
+    // the currently-playing video.
+    const currentVid = (currentIdx >= 0 && filtered[currentIdx]) ? filtered[currentIdx].video_id : null;
+
+    // Rebuild videos pool from the current claim set (works across enterprises and filters)
+    if (claimedIds.size > 0) {
+      videos = allVideos.filter(v => claimedIds.has(v.video_id));
+    } else {
+      videos = [...allVideos];
+    }
+
+    // Recompute `filtered` inline (mirrors applyFilter logic, minus loadVideoAt)
+    const showQA = document.getElementById('togQAed').checked;
+    const ent    = document.getElementById('fEnt').value;
+    const user   = document.getElementById('fUser').value;
+    const status = document.getElementById('fStatus').value;
+    const vidId  = document.getElementById('fVid').value.trim().toLowerCase();
+    const vin    = document.getElementById('fVin').value.trim().toLowerCase();
+    const sku    = document.getElementById('fSku').value.trim().toLowerCase();
+
+    filtered = videos.filter(v=>{
+      if (isLockedByOther(v)) return false;
+      if (showQA) { if (!isQAed(v)) return false; }
+      else        { if (isQAed(v))  return false; }
+      if (ent    && v.enterprise!==ent)   return false;
+      if (user   && v.qc_user  !==user)   return false;
+      if (status && v.status   !==status) return false;
+      if (vidId  && !v.video_id.toLowerCase().includes(vidId)) return false;
+      if (vin    && !v.vin.toLowerCase().includes(vin))        return false;
+      if (sku    && !v.sku.toLowerCase().includes(sku))        return false;
+      if (!matchDate(v)) return false;
+      return true;
+    });
+
+    // Re-render list and stats (cheap, no video reload)
+    renderList();
+    updateStats();
+    updateBatchPill();
+
+    // Try to keep the current video selected
+    if (currentVid) {
+      const newIdx = filtered.findIndex(v => v.video_id === currentVid);
+      if (newIdx >= 0) {
+        currentIdx = newIdx;
+        document.querySelectorAll('.vitem').forEach((el,i)=>el.classList.toggle('active', i===currentIdx));
+        document.getElementById('vidCtr').textContent = `${currentIdx + 1} / ${filtered.length}`;
+        // Refresh the right-side metadata pane (status may have changed)
+        renderMeta(filtered[currentIdx]);
+      } else {
+        // Current video disappeared from filtered (e.g. another reviewer's claim,
+        // or it just got QA'd). Don't yank the player out from under the user.
+        document.getElementById('vidCtr').textContent = `— / ${filtered.length}`;
+      }
+    }
+  } finally {
+    isPolling = false;
+  }
+}
+
+function reloadData() {
+  loadAllData().then((ok)=>{
+    if (!ok) return;
+    applyBatch();
+    toast(`✓ ${allVideos.length} videos refreshed`,'success');
+  });
+}
+
+function entSync() {
+  loadAllData().then((ok)=>{
+    if (!ok) return;
+    buildEntList();
+    toast(`✓ Synced — ${allVideos.length} videos loaded`,'success');
+  });
+}
+
+// ─────────────────────────────────────────────
+//  QA CHECK
+// ─────────────────────────────────────────────
+function isQAed(v) {
+  if (v.qa_state === 'done') return true;
+  return !!(v.qa_status && v.qa_status.trim()) || !!localReviews[v.video_id];
+}
+
+// ─────────────────────────────────────────────
+//  ENTERPRISE PICKER
+// ─────────────────────────────────────────────
+function buildEntList() {
+  // Diagnostic line uses unfiltered totals
+  const totalRows = allVideos.length;
+  const lockedByOthers = allVideos.filter(v => isLockedByOther(v)).length;
+  const serverDone = allVideos.filter(v =>
+    (v.qa_state === 'done') || (v.qa_status && v.qa_status.trim())
+  ).length;
+  const myPending = allVideos.filter(v => !isQAed(v) && !isLockedByOther(v)).length;
+  const localOnly = Object.keys(localReviews).length;
+  const dbg = document.getElementById('entDebug');
+  if (dbg) {
+    dbg.textContent = `[debug] from-server=${totalRows} · server-done=${serverDone} · in-progress-by-others=${lockedByOthers} · local-cache=${localOnly} · pending=${myPending}`;
+  }
+
+  renderEntList();  // renderEntList now sets the top totals based on active filters
+}
+
+function resetLocalCache() {
+  if (!confirm('Clear local QA cache?\n\nThis removes any locally-saved review state in this browser. Sheet data is unaffected. Use this if the dashboard wrongly thinks videos are already QA\'d.')) return;
+  localReviews = {};
+  submitQueue = [];
+  localStorage.removeItem('qa_local_reviews');
+  localStorage.removeItem('qa_submit_queue');
+  updateQueueBadge();
+  toast('Local cache cleared — refreshing data','info');
+  loadAllData().then(() => buildEntList());
+}
+
+// Diagnostic tool — opens a popup with detailed connection info
+async function runDiagnostics() {
+  const lines = [];
+  const log = (s) => { lines.push(s); console.log('[diag]', s); };
+
+  log('=== QA Dashboard Diagnostics ===');
+  log('Time: ' + new Date().toISOString());
+  log('Origin: ' + window.location.origin + ' (protocol: ' + window.location.protocol + ')');
+  log('Reviewer: ' + (reviewer.email || '(none)'));
+  log('GAS_URL: ' + GAS_URL);
+  log('');
+  log('--- Test 1: GET ?action=list ---');
+  const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=list&_t=' + Date.now();
+  try {
+    const t0 = Date.now();
+    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+    const ms = Date.now() - t0;
+    log('  HTTP ' + res.status + ' (' + ms + 'ms)');
+    log('  Content-Type: ' + (res.headers.get('content-type') || '(none)'));
+    const text = await res.text();
+    log('  Body length: ' + text.length + ' bytes');
+    log('  First 300 chars: ' + text.slice(0, 300));
+    try {
+      const json = JSON.parse(text);
+      log('  JSON ok: ' + json.ok + ', rows: ' + (json.rows ? json.rows.length : '(no rows field)'));
+      if (json.rows && json.rows.length > 0) {
+        log('  Sample row keys: ' + Object.keys(json.rows[0]).join(', '));
+        log('  Sample qa_status: "' + json.rows[0].qa_status + '"');
+        log('  Sample qa_state:  "' + json.rows[0].qa_state + '"');
+        log('  Sample qa_claimed_by: "' + json.rows[0].qa_claimed_by + '"');
+      }
+    } catch (e) {
+      log('  ✗ JSON parse failed: ' + e.message);
+    }
+  } catch (e) {
+    log('  ✗ Fetch failed: ' + e.message);
+    log('  This is most likely a CORS or network issue.');
+    if (window.location.protocol === 'file:') {
+      log('  ⚠ You are running from file:// — CORS often blocks fetch responses');
+      log('     from this protocol. Serve via http(s):// instead.');
+    }
+  }
+
+  log('');
+  log('--- Test 2: local state ---');
+  log('  allVideos.length: ' + allVideos.length);
+  log('  localReviews: ' + Object.keys(localReviews).length + ' entries');
+  log('  submitQueue: ' + submitQueue.length);
+  log('  claimedIds: ' + claimedIds.size);
+
+  if (allVideos.length > 0) {
+    const pending = allVideos.filter(v => !isQAed(v) && !isLockedByOther(v));
+    const done = allVideos.filter(v => isQAed(v));
+    const locked = allVideos.filter(v => isLockedByOther(v));
+    log('  pending: ' + pending.length + ', done: ' + done.length + ', locked: ' + locked.length);
+    log('  Sample first row:');
+    log('    video_id="' + allVideos[0].video_id + '"');
+    log('    enterprise="' + allVideos[0].enterprise + '"');
+    log('    qa_status="' + allVideos[0].qa_status + '"');
+    log('    qa_state="' + allVideos[0].qa_state + '"');
+    log('    qa_claimed_by="' + allVideos[0].qa_claimed_by + '"');
+    log('    isQAed=' + isQAed(allVideos[0]) + ', isLockedByOther=' + isLockedByOther(allVideos[0]));
+    log('    in localReviews? ' + (allVideos[0].video_id in localReviews));
+  }
+
+  // Show in a popup-style div
+  const txt = lines.join('\n');
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if (w) {
+    w.document.body.style.cssText = 'font-family:monospace;white-space:pre;padding:20px;background:#1a1d21;color:#e8ecf0;';
+    w.document.body.textContent = txt;
+  } else {
+    // Popup blocked — fallback to alert (truncated)
+    alert(txt.slice(0, 2000) + (txt.length > 2000 ? '\n\n...(truncated, see console)' : ''));
+    console.log(txt);
+  }
+}
+
+// Get the videos matching the current enterprise-screen filters (search, user, verified_status).
+// Use this for both rendering counts and deciding what to claim.
+function getEntFilteredVideos() {
+  const userF   = (document.getElementById('entFilterUser')?.value   || '').trim().toLowerCase();
+  const statusF = (document.getElementById('entFilterStatus')?.value || '').trim().toLowerCase();
+  return allVideos.filter(v => {
+    if (userF   && (v.qc_user || '').trim().toLowerCase() !== userF)   return false;
+    if (statusF && (v.status  || '').trim().toLowerCase() !== statusF) return false;
+    return true;
+  });
+}
+
+function renderEntList() {
+  const q = (document.getElementById('entSearch')?.value || '').trim().toLowerCase();
+
+  // Populate the QC user dropdown lazily from data (only first time / when missing)
+  const userSel = document.getElementById('entFilterUser');
+  if (userSel && userSel.options.length <= 1) {
+    const users = [...new Set(allVideos.map(v=>v.qc_user).filter(u=>u && u.includes('@')))].sort();
+    userSel.innerHTML = '<option value="">All QC Users</option>' +
+      users.map(u=>`<option value="${escAttr(u)}">${escH(u)}</option>`).join('');
+  }
+
+  // Apply user + verified_status filters
+  const filtered = getEntFilteredVideos();
+
+  const map = {};
+  filtered.forEach(v=>{
+    const e = v.enterprise || '(Unknown)';
+    if (!map[e]) map[e] = {total:0, pending:0, locked:0, done:0};
+    map[e].total++;
+    if (isQAed(v)) {
+      map[e].done++;
+    } else if (isLockedByOther(v)) {
+      map[e].locked++;
+    } else {
+      map[e].pending++;
+    }
+  });
+
+  let ents = Object.entries(map);
+  if (q) ents = ents.filter(([name]) => name.toLowerCase().includes(q));
+  ents.sort((a,b)=>b[1].pending - a[1].pending);
+
+  // Update the top "Total available pending" box to reflect the filtered subset
+  const totalRows = filtered.length;
+  const done = filtered.filter(v => isQAed(v)).length;
+  const lockedByOthers = filtered.filter(v => isLockedByOther(v)).length;
+  const availablePending = filtered.filter(v => !isQAed(v) && !isLockedByOther(v)).length;
+  const tb = document.getElementById('entTotal');
+  const lb = document.getElementById('entTotalLbl');
+  if (tb) tb.textContent = availablePending + ' available';
+  if (lb) lb.innerHTML = `Total ${totalRows} · Done ${done} · In progress ${lockedByOthers} · Available`;
+
+  const list = document.getElementById('entList');
+  if (!ents.length) {
+    list.innerHTML = q
+      ? `<div style="padding:20px;text-align:center;color:var(--text3);">No enterprises match "${escH(q)}"</div>`
+      : `<div style="padding:20px;text-align:center;color:var(--green);">🎉 No matching videos</div>`;
+    return;
+  }
+
+  list.innerHTML = ents.map(([name,counts])=>{
+    const lockedHtml = counts.locked > 0
+      ? `<span class="pill pill-locked" title="In progress by other reviewers">⏳ ${counts.locked} in progress</span>`
+      : '';
+    const hintParts = [`${counts.total} total`];
+    if (counts.pending > 0)  hintParts.push(`${counts.pending} available`);
+    if (counts.locked > 0)   hintParts.push(`${counts.locked} in progress by others`);
+    if (counts.done > 0)     hintParts.push(`${counts.done} done`);
+    const disabled = counts.pending === 0;
+    return `
+    <div class="ent-row">
+      <div>
+        <div class="name">${escH(name)}</div>
+        <div class="hint">${hintParts.join(' · ')}</div>
+      </div>
+      <div class="ent-row-right">
+        ${lockedHtml}
+        <span class="pill ${counts.pending>0?'pill-pending':(counts.done===counts.total?'pill-done':'pill-locked')}">${counts.pending} available</span>
+        <button class="claim-btn" onclick="claimBatch('${escAttr(name)}')" ${disabled?'disabled title="Nothing available right now"':''}>Start QA →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function claimBatch(enterprise) {
+  curEnterprise = enterprise;
+
+  // Disable ALL claim buttons across the enterprise list and Load All Pending,
+  // and convert the clicked one to an "Assigning..." state.
+  const claimBtns = document.querySelectorAll('.claim-btn');
+  const loadAllBtn = document.querySelector('#entScreen .ent-footer .btn-outline');
+  const originalLabels = new Map(); // restore on failure
+  claimBtns.forEach(btn => {
+    originalLabels.set(btn, btn.innerHTML);
+    btn.disabled = true;
+    btn.style.cursor = 'not-allowed';
+    btn.style.opacity = '0.55';
+    // Mark which button initiated the claim so we can show "Assigning…" on it
+    const onclickAttr = btn.getAttribute('onclick') || '';
+    const isThisOne = enterprise && onclickAttr.includes(`'${escAttr(enterprise)}'`);
+    if (isThisOne || (!enterprise && btn === loadAllBtn)) {
+      btn.innerHTML = '<span class="spinner-inline"></span> Assigning…';
+    }
+  });
+  if (loadAllBtn) {
+    originalLabels.set(loadAllBtn, loadAllBtn.innerHTML);
+    loadAllBtn.disabled = true;
+    loadAllBtn.style.cursor = 'not-allowed';
+    loadAllBtn.style.opacity = '0.55';
+    if (!enterprise) {
+      loadAllBtn.innerHTML = '<span class="spinner-inline"></span> Assigning…';
+    }
+  }
+
+  const restoreButtons = () => {
+    originalLabels.forEach((html, btn) => {
+      btn.innerHTML = html;
+      btn.disabled = false;
+      btn.style.cursor = '';
+      btn.style.opacity = '';
+    });
+  };
+
+  // ATOMIC server-side claim. The server returns the actual video_ids it
+  // assigned to us, after re-checking the live sheet under a lock.
+  const reqBody = {
+    action: 'claim',
+    reviewer: reviewer.email,
+    timestamp: new Date().toISOString(),
+  };
+  // If the user has the QC user / verified_status filters set, pass an
+  // explicit list of video_ids so the server only claims matching rows.
+  // Otherwise keep the enterprise-only path (faster on the server side).
+  const userF   = (document.getElementById('entFilterUser')?.value   || '').trim().toLowerCase();
+  const statusF = (document.getElementById('entFilterStatus')?.value || '').trim().toLowerCase();
+  const hasFilters = !!(userF || statusF);
+  if (hasFilters) {
+    const matching = allVideos.filter(v => {
+      if (enterprise && v.enterprise !== enterprise) return false;
+      if (userF   && (v.qc_user || '').trim().toLowerCase() !== userF)   return false;
+      if (statusF && (v.status  || '').trim().toLowerCase() !== statusF) return false;
+      if (isQAed(v) || isLockedByOther(v)) return false;
+      return true;
+    });
+    reqBody.video_ids = matching.map(v => v.video_id);
+    if (!reqBody.video_ids.length) {
+      restoreButtons();
+      toast('No videos match the active filters', 'warn');
+      return;
+    }
+  } else if (enterprise) {
+    reqBody.enterprise = enterprise;
+  }
+
+  let claimResult;
+  try {
+    claimResult = await postToSheetReadable(reqBody);
+  } catch (e) {
+    restoreButtons();
+    toast('Claim failed — check connection and try again', 'error');
+    console.error('claim error:', e);
+    return;
+  }
+  if (!claimResult || !claimResult.ok) {
+    restoreButtons();
+    toast('Claim rejected by server' + (claimResult && claimResult.error ? ': ' + claimResult.error : ''), 'error');
+    return;
+  }
+  const claimed = Array.isArray(claimResult.claimed) ? claimResult.claimed : [];
+  const skipped = Array.isArray(claimResult.skipped) ? claimResult.skipped : [];
+  if (claimed.length === 0) {
+    // Apply skipped rows' new state locally for instant UI feedback
+    const nowISO0 = new Date().toISOString();
+    skipped.forEach(s => {
+      if (s.reason === 'locked_by_other' && s.id && s.owner) {
+        const v = allVideos.find(x => x.video_id === s.id);
+        if (v) {
+          v.qa_claimed_by = s.owner;
+          v.qa_claimed_at = nowISO0;
+          v.qa_state = 'in_progress';
+        }
+      }
+    });
+    restoreButtons();
+    buildEntList(); // re-render with new lock state
+    toast(skipped.length
+      ? `Nothing claimed — ${skipped.length} videos were already taken by other reviewers`
+      : 'No available videos to claim — try another enterprise',
+      'warn');
+    return;
+  }
+
+  claimedIds = new Set(claimed);
+  lsSet('qa_claimed_ids', [...claimedIds]);
+  lastClaimAt = Date.now();
+
+  // OPTIMIZATION: Don't refetch the whole sheet — server already told us which
+  // IDs we got. Mark them locally as claimed-by-us so the UI is correct without
+  // the round-trip. The next poll (12s) will reconcile any drift.
+  const nowISO = new Date().toISOString();
+  const claimedSet = new Set(claimed);
+  allVideos.forEach(v => {
+    if (claimedSet.has(v.video_id)) {
+      v.qa_claimed_by = reviewer.email;
+      v.qa_claimed_at = nowISO;
+      v.qa_state = 'in_progress';
+    }
+  });
+  // Also mark skipped-by-other rows so the UI reflects them
+  skipped.forEach(s => {
+    if (s.reason === 'locked_by_other' && s.id) {
+      const v = allVideos.find(x => x.video_id === s.id);
+      if (v && s.owner) {
+        v.qa_claimed_by = s.owner;
+        v.qa_claimed_at = nowISO;
+        v.qa_state = 'in_progress';
+      }
+    }
+  });
+
+  // Build the working video pool from the IDs we actually claimed.
+  // This automatically respects any filters that were applied at claim time
+  // (because we passed video_ids to the server when filters were active),
+  // and works correctly across multiple enterprises (Load All Pending case).
+  videos = allVideos.filter(v => claimedIds.has(v.video_id));
+
+  // Render filter dropdowns and stats BEFORE switching screens, so the
+  // review screen has all UI ready when shown.
+  populateSidebarFilters();
+  populateSumFilters();
+
+  // Carry the home-screen filters into the review-screen filters so the
+  // user can see what they filtered by, and so the review list visibly
+  // reflects the filter (not just the underlying pool).
+  if (userF) {
+    const fUserEl = document.getElementById('fUser');
+    if (fUserEl && [...fUserEl.options].some(o => o.value.toLowerCase() === userF)) {
+      fUserEl.value = [...fUserEl.options].find(o => o.value.toLowerCase() === userF).value;
+    }
+  }
+  if (statusF) {
+    const fStatusEl = document.getElementById('fStatus');
+    if (fStatusEl) fStatusEl.value = statusF;
+  }
+  // Only set the enterprise filter if we claimed from a single enterprise
+  // (not Load All Pending across multiple). Hide the enterprise dropdown
+  // entirely in single-enterprise mode — the user already chose one, so
+  // the dropdown is just clutter.
+  const fEntWrap = document.getElementById('fEntWrap');
+  if (enterprise) {
+    const fEntEl = document.getElementById('fEnt');
+    if (fEntEl && [...fEntEl.options].some(o => o.value === enterprise)) {
+      fEntEl.value = enterprise;
+    }
+    if (fEntWrap) fEntWrap.style.display = 'none';
+  } else {
+    if (fEntWrap) fEntWrap.style.display = '';
+  }
+
+  applyFilter();
+  updateStats();
+  updateBatchPill();
+
+  // Switch screens — but DON'T restore buttons yet. We'll restore them
+  // once the first video has loaded metadata (or after a 6s safety timeout),
+  // so the user sees "Assigning…" persist through the actual loading time
+  // rather than flashing back to "Start QA".
+  hideScreens();
+
+  const restoreOnceVideoReady = () => {
+    if (restoredAlready) return;
+    restoredAlready = true;
+    restoreButtons();
+  };
+  let restoredAlready = false;
+  // Hook the video element if one exists (loadVideoAt was just called via applyFilter)
+  const player = document.getElementById('player');
+  if (player) {
+    const finish = () => restoreOnceVideoReady();
+    player.addEventListener('loadedmetadata', finish, { once: true });
+    player.addEventListener('error',          finish, { once: true });
+  }
+  // Safety: never leave buttons in loading state forever
+  setTimeout(restoreOnceVideoReady, 6000);
+
+  const skippedNote = skipped.length ? ` (${skipped.length} were taken by others)` : '';
+  toast(`✓ Claimed ${claimed.length} video${claimed.length===1?'':'s'}${enterprise?' from '+enterprise:''}${skippedNote}`,'success');
+}
+
+function showEntScreen() {
+  // Auto-release current claims that the user hasn't QA'd yet
+  const unfinished = [...claimedIds].filter(id => !localReviews[id]);
+  if (unfinished.length > 0) {
+    postToSheet({action:'release', video_ids:unfinished, reviewer:reviewer.email, timestamp:new Date().toISOString()});
+  }
+  claimedIds = new Set();
+  lsSet('qa_claimed_ids', []);
+  curEnterprise = null;
+  document.getElementById('batchPill').style.display = 'none';
+
+  // Restore the review-screen enterprise dropdown for the next claim
+  const fEntWrap = document.getElementById('fEntWrap');
+  if (fEntWrap) fEntWrap.style.display = '';
+
+  buildEntList();
+  showScreen('entScreen');
+}
+
+function updateBatchPill() {
+  const p = document.getElementById('batchPill');
+  const done = [...claimedIds].filter(id=>localReviews[id]).length;
+  const total = claimedIds.size;
+  if (!total) { p.style.display='none'; return; }
+  p.style.display='inline-flex';
+  p.textContent = `${curEnterprise||'All'} · ${done}/${total}`;
+}
+
+// ─────────────────────────────────────────────
+//  BATCH → FILTER PIPELINE
+// ─────────────────────────────────────────────
+function applyBatch() {
+  if (claimedIds.size > 0) {
+    // Pool = exactly what the user has claimed (works across enterprises and filters)
+    videos = allVideos.filter(v => claimedIds.has(v.video_id));
+  } else {
+    videos = [...allVideos];
+  }
+  applyFilter();
+}
+
+// ─────────────────────────────────────────────
+//  FILTERS
+// ─────────────────────────────────────────────
+function setDate(el, v) {
+  document.querySelectorAll('.date-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); dateFilter=v; applyFilter();
+}
+function dateBound(daysAgo) {
+  const d=new Date(); d.setDate(d.getDate()-daysAgo); d.setHours(0,0,0,0); return d;
+}
+function matchDate(v) {
+  if (dateFilter==='all') return true;
+  const raw=v.created||v.updated; if(!raw) return true;
+  const d=new Date(raw); if(isNaN(d)) return true;
+  if (dateFilter==='today')     return d>=dateBound(0);
+  if (dateFilter==='yesterday') return d>=dateBound(1)&&d<dateBound(0);
+  if (dateFilter==='week')      return d>=dateBound(7);
+  return true;
+}
+function populateSidebarFilters() {
+  const ents  = [...new Set(videos.map(v=>v.enterprise).filter(Boolean))].sort();
+  const users = [...new Set(videos.map(v=>v.qc_user).filter(u=>u&&u.includes('@')))].sort();
+  document.getElementById('fEnt').innerHTML  = '<option value="">All Enterprises</option>'+ents.map(e=>`<option value="${escAttr(e)}">${escH(e)}</option>`).join('');
+  document.getElementById('fUser').innerHTML = '<option value="">All QC Users</option>'   +users.map(u=>`<option value="${escAttr(u)}">${escH(u)}</option>`).join('');
+}
+
+function applyFilter(cfObj) {
+  const ent    = document.getElementById('fEnt').value;
+  const user   = document.getElementById('fUser').value;
+  const status = document.getElementById('fStatus').value;
+  const vidId  = document.getElementById('fVid').value.trim().toLowerCase();
+  const vin    = document.getElementById('fVin').value.trim().toLowerCase();
+  const sku    = document.getElementById('fSku').value.trim().toLowerCase();
+  const showQA = document.getElementById('togQAed').checked;
+  const cf     = cfObj || null;
+
+  filtered = videos.filter(v=>{
+    // Multi-user: hide videos locked by other reviewers
+    if (isLockedByOther(v)) return false;
+    // Toggle: ON = only QA'd; OFF = only pending
+    if (showQA) {
+      if (!isQAed(v)) return false;
+    } else {
+      if (isQAed(v)) return false;
+    }
+    if (ent    && v.enterprise!==ent)   return false;
+    if (user   && v.qc_user  !==user)   return false;
+    if (status && v.status   !==status) return false;
+    if (vidId  && !v.video_id.toLowerCase().includes(vidId)) return false;
+    if (vin    && !v.vin.toLowerCase().includes(vin))        return false;
+    if (sku    && !v.sku.toLowerCase().includes(sku))        return false;
+    if (!matchDate(v)) return false;
+    if (cf) {
+      if (cf.field==='status'     && v.status    !==cf.value) return false;
+      if (cf.field==='enterprise' && v.enterprise!==cf.value) return false;
+      if (cf.field==='qc_user'   && v.qc_user    !==cf.value) return false;
+      if (cf.field==='dateFilter') {
+        const old=dateFilter; dateFilter=cf.value;
+        const p=matchDate(v); dateFilter=old; if(!p) return false;
+      }
+    }
+    return true;
+  });
+
+  renderList(); updateStats(); updateBatchPill();
+  if (filtered.length) loadVideoAt(0);
+  else {
+    currentIdx=-1;
+    const showQAed = document.getElementById('togQAed').checked;
+    const msg = showQAed
+      ? 'No QA\'d videos yet'
+      : '🎉 All caught up — no pending videos';
+    document.getElementById('videoWrap').innerHTML=`<div class="no-vid"><span>${showQAed?'◈':'🎉'}</span>${msg}</div>`;
+    document.getElementById('metaPane').innerHTML ='<div class="m-label">Details</div><div style="font-size:12px;color:var(--text3);">No videos match</div>';
+    document.getElementById('vidCtr').textContent ='0 / 0';
+  }
+}
+
+function clearFilters() {
+  ['fEnt','fUser','fStatus','fVid','fVin','fSku'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.date-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.date-tab[data-v="all"]').classList.add('active');
+  dateFilter='all'; activeCF=null; renderChips(); applyFilter();
+}
+
+// ─────────────────────────────────────────────
+//  CUSTOM FILTER CHIPS
+// ─────────────────────────────────────────────
+function renderChips() {
+  const sec=document.getElementById('chipSection');
+  const wrap=document.getElementById('chips');
+  if (!customFilters.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  wrap.innerHTML=customFilters.map((f,i)=>
+    `<span class="chip${activeCF===i?' active':''}" onclick="applyCF(${i})">
+      ${escH(f.name)} <span class="x" onclick="event.stopPropagation();removeCF(${i})">✕</span>
+    </span>`
+  ).join('');
+}
+function applyCF(i) {
+  activeCF = activeCF===i ? null : i;
+  renderChips();
+  applyFilter(activeCF!==null ? customFilters[activeCF] : null);
+  showPage('review');
+}
+function removeCF(i) {
+  customFilters.splice(i,1); lsSet('qa_custom_filters',customFilters);
+  if (activeCF===i) activeCF=null;
+  renderChips(); renderCFList();
+}
+
+// ─────────────────────────────────────────────
+//  RENDER LIST
+// ─────────────────────────────────────────────
+function renderList() {
+  const list=document.getElementById('videoList');
+  if (!filtered.length) {
+    const showQAed = document.getElementById('togQAed').checked;
+    const msg = showQAed
+      ? 'No QA\'d videos yet — toggle off to see pending'
+      : '🎉 No pending videos — toggle on to see your QA history';
+    list.innerHTML=`<div class="list-empty">${msg}</div>`; return;
+  }
+  list.innerHTML=filtered.map((v,i)=>{
+    const lr=localReviews[v.video_id];
+    const shQA=v.qa_status&&v.qa_status.trim();
+    const ds=lr?lr.action:shQA?v.qa_status:v.status;
+    const b=badge(ds,!!lr,!!shQA);
+    return `<div class="vitem${i===currentIdx?' active':''}" id="vi-${i}" onclick="loadVideoAt(${i})">
+      <div class="vitem-name">${escH(v.enterprise||'—')}</div>
+      <div class="vbadge ${b.c}">${b.l}</div>
+      <div class="vitem-id">${escH(v.video_id)}</div>
+      <div class="vitem-date">${(v.created||'').slice(0,10)}</div>
+    </div>`;
+  }).join('');
+}
+function badge(status, isLocal=false, isSheetQA=false) {
+  if (isLocal) {
+    const s=(status||'').toLowerCase();
+    if (s==='approved') return {c:'b-qa',l:'★ QA Approved'};
+    if (s==='rejected') return {c:'b-qa',l:'★ QA Rejected'};
+    return {c:'b-qa',l:'★ QA Saved'};
+  }
+  if (isSheetQA) {
+    const s=(status||'').toLowerCase();
+    if (s==='approved'||s==='verified') return {c:'b-verified',l:'✓ QA Done'};
+    if (s==='rejected')                 return {c:'b-rejected',l:'✗ QA Done'};
+    return {c:'b-done',l:'◉ QA Done'};
+  }
+  if (!status) return {c:'b-pending',l:'Pending'};
+  const s=status.toLowerCase();
+  if (s==='verified'||s==='approved') return {c:'b-verified',l:'✓ Verified'};
+  if (s==='rejected')                 return {c:'b-rejected',l:'✗ Rejected'};
+  if (s==='done')                     return {c:'b-done',    l:'◉ Done'};
+  return {c:'b-pending',l:s};
+}
+const escH = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const escAttr = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+
+// ─────────────────────────────────────────────
+//  LOAD VIDEO
+// ─────────────────────────────────────────────
+function loadVideoAt(idx) {
+  if (idx<0||idx>=filtered.length) return;
+  currentIdx=idx; currentAction=null;
+  clearActionUI();
+
+  const v=filtered[idx];
+  const lr=localReviews[v.video_id];
+  if (lr) {
+    document.getElementById('comment').value=lr.comment||'';
+    currentAction=lr.action;
+    document.getElementById('btnApprove').classList.toggle('sel',lr.action==='Approved');
+    document.getElementById('btnReject').classList.toggle('sel', lr.action==='Rejected');
+    document.getElementById('reasons').style.display=lr.action==='Rejected'?'flex':'none';
+    document.getElementById('btnSubmit').disabled=false;
+    document.getElementById('btnClearSel').classList.add('show');
+  }
+
+  const wrap=document.getElementById('videoWrap');
+  wrap.innerHTML=`
+    <div class="load-over" id="lo"><div class="spin"></div></div>
+    <video id="player" controls preload="metadata">
+      <source src="${escAttr(v.url)}" type="video/mp4"/>
+    </video>`;
+  const p=document.getElementById('player');
+  p.oncanplay=()=>{ const lo=document.getElementById('lo'); if(lo)lo.remove(); };
+  p.onerror  =()=>{ const lo=document.getElementById('lo'); if(lo)lo.remove(); wrap.innerHTML='<div class="no-vid"><span>⚠</span>Video unavailable</div>'; };
+
+  document.getElementById('vidCtr').textContent=`${idx+1} / ${filtered.length}`;
+  renderMeta(v);
+  document.querySelectorAll('.vitem').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  document.getElementById(`vi-${idx}`)?.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+// ─────────────────────────────────────────────
+//  META
+// ─────────────────────────────────────────────
+function renderMeta(v) {
+  const lr=localReviews[v.video_id];
+  const shQA=v.qa_status&&v.qa_status.trim();
+  const eff=lr?lr.action:shQA?v.qa_status:v.status;
+  const inQ=submitQueue.some(q=>q.video_id===v.video_id);
+  const dot=
+    (eff==='Approved'||eff==='verified')?'var(--green)':
+    (eff==='Rejected'||eff==='rejected')?'var(--red)':
+     eff==='done'?'var(--accent2)':'var(--text3)';
+  const syncNote=inQ?`<div style="margin-top:5px;font-size:11px;color:var(--yellow)">⏳ Pending sync</div>`
+    :lr?`<div style="margin-top:5px;font-size:11px;color:var(--green)">✓ Synced</div>`:'';
+  const qcDisp=v.qa_status||v.qc_status||'—';
+  const owner = lockOwner(v);
+  const ownerNote = owner && reviewer.email && owner.toLowerCase() === reviewer.email.toLowerCase()
+    ? `<div style="margin-top:5px;font-size:11px;color:var(--accent2)">🔒 Claimed by you</div>`
+    : '';
+  document.getElementById('metaPane').innerHTML=`
+    <div class="m-label">QA Status</div>
+    <div class="m-box">
+      <div class="cap">Review Decision</div>
+      <div class="status-row"><div class="sdot" style="background:${dot}"></div><div class="stext" style="color:${dot}">${escH(eff||'Pending Review')}</div></div>
+      ${v.reason?`<div style="margin-top:5px;font-size:11px;color:var(--text3)">Reason: ${escH(v.reason)}</div>`:''}
+      ${syncNote}
+      ${ownerNote}
+    </div>
+    <div class="m-label">QC Status</div>
+    <div class="m-box">
+      <div class="cap">QC Processing</div>
+      <div class="status-row"><div class="sdot" style="background:${qcDisp==='—'?'var(--text3)':'var(--accent)'}"></div><div class="stext" style="color:var(--accent2);font-size:12px;">${escH(qcDisp)}</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="m-label">Video Info</div>
+    ${mRow('Video ID',v.video_id,true)}${mRow('Enterprise',v.enterprise)}${mRow('Ent. ID',v.enterprise_id)}
+    <div class="divider"></div>
+    <div class="m-label">QC Info</div>
+    ${mRow('QC User',v.qc_user)}${mRow('QC Status',qcDisp)}${v.qa_reviewer?mRow('QA Reviewer',v.qa_reviewer):''}
+    <div class="divider"></div>
+    <div class="m-label">Asset Info</div>
+    ${mRow('VIN',v.vin||'—')}${mRow('SKU',v.sku||'—',true)}
+    <div class="divider"></div>
+    <div class="m-label">Timestamps</div>
+    ${mRow('Created',v.created)}${mRow('Updated',v.updated)}`;
+}
+const mRow=(k,v,m=false)=>`<div class="m-row"><div class="m-key">${k}</div><div class="m-val${m?' mono':''}">${escH(v||'—')}</div></div>`;
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+function goPrev() { if(currentIdx>0)                  loadVideoAt(currentIdx-1); }
+function goNext() { if(currentIdx<filtered.length-1)  loadVideoAt(currentIdx+1); }
+
+// ─────────────────────────────────────────────
+//  ACTION
+// ─────────────────────────────────────────────
+function toggleAction(type) {
+  if (currentAction === type) { clearAction(); return; }
+  currentAction = type;
+  document.getElementById('btnApprove').classList.toggle('sel', type==='Approved');
+  document.getElementById('btnReject').classList.toggle('sel',  type==='Rejected');
+  document.getElementById('reasons').style.display = type==='Rejected'?'flex':'none';
+  document.getElementById('btnSubmit').disabled = false;
+  document.getElementById('btnClearSel').classList.add('show');
+}
+function clearAction() {
+  currentAction=null;
+  document.getElementById('btnApprove').classList.remove('sel');
+  document.getElementById('btnReject').classList.remove('sel');
+  document.getElementById('reasons').style.display='none';
+  document.getElementById('btnSubmit').disabled=true;
+  document.getElementById('btnClearSel').classList.remove('show');
+  document.querySelectorAll('.reason').forEach(b=>b.classList.remove('active'));
+}
+function clearActionUI() {
+  clearAction();
+  document.getElementById('comment').value='';
+}
+function toggleReason(btn, r) {
+  const ta=document.getElementById('comment');
+  if(btn.classList.contains('active')){
+    btn.classList.remove('active');
+    ta.value=ta.value.split(',').map(s=>s.trim()).filter(s=>s!==r).join(', ');
+  } else {
+    btn.classList.add('active');
+    ta.value=ta.value?ta.value.trim()+', '+r:r;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  SUBMIT
+// ─────────────────────────────────────────────
+async function submitReview() {
+  if (currentIdx<0||!currentAction) return;
+  const v=filtered[currentIdx];
+  const comment=document.getElementById('comment').value.trim();
+  if (currentAction==='Rejected'&&!comment){
+    toast('Add a rejection reason','error');
+    document.getElementById('comment').focus(); return;
+  }
+  const payload={
+    video_id:v.video_id,
+    action:currentAction,
+    comment,
+    reviewer:reviewer.email,
+    reviewer_name:reviewer.name,
+    timestamp:new Date().toISOString()
+  };
+
+  localReviews[v.video_id]=payload;
+  lsSet('qa_local_reviews',localReviews);
+
+  updateListItemBadge(currentIdx, currentAction, true);
+  updateStats(); updateBatchPill();
+  renderMeta(v);
+  toast(`${currentAction} saved ✓`,'success');
+
+  postToSheet(payload).then(ok=>{
+    if (!ok) {
+      if (!submitQueue.some(q=>q.video_id===v.video_id)) {
+        submitQueue.push(payload); lsSet('qa_submit_queue',submitQueue);
+      }
+      updateQueueBadge();
+    } else {
+      submitQueue=submitQueue.filter(q=>q.video_id!==v.video_id);
+      lsSet('qa_submit_queue',submitQueue);
+      updateQueueBadge();
+    }
+  });
+
+  const next=findNextPending(currentIdx);
+  if (next!==-1) loadVideoAt(next);
+  else if (currentIdx<filtered.length-1) goNext();
+}
+
+function findNextPending(from) {
+  for(let i=from+1;i<filtered.length;i++) if(!isQAed(filtered[i])) return i;
+  return -1;
+}
+
+async function postToSheet(payload) {
+  try {
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    return true;
+  } catch(e) { return false; }
+}
+
+// Like postToSheet but reads the JSON response (used when we need to know
+// whether the server actually accepted the request — e.g. for atomic claim).
+// Apps Script web apps with "Anyone" access return CORS-permissive responses.
+// We send Content-Type: text/plain so the request is "simple" (no preflight).
+async function postToSheetReadable(payload) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'cors',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch (e) { throw new Error('Invalid JSON response: ' + text.slice(0, 200)); }
+}
+
+async function flushQueue() {
+  if(!submitQueue.length) return;
+  toast(`Syncing ${submitQueue.length} items…`,'info');
+  const rem=[];
+  for(const item of submitQueue){const ok=await postToSheet(item);if(!ok)rem.push(item);}
+  submitQueue=rem; lsSet('qa_submit_queue',submitQueue); updateQueueBadge();
+  toast(rem.length?`${rem.length} items still pending`:'All synced ✓', rem.length?'warn':'success');
+}
+
+function updateQueueBadge() {
+  const b=document.getElementById('queueBadge'),n=submitQueue.length;
+  b.textContent=n?`⏳ ${n} pending`:'✓ Synced';
+  b.className='queue-badge'+(n?'':' synced');
+}
+function updateListItemBadge(idx,action,isLocal) {
+  const el=document.getElementById(`vi-${idx}`); if(!el) return;
+  const b=badge(action,isLocal,false);
+  const be=el.querySelector('.vbadge');
+  if(be){be.className=`vbadge ${b.c}`;be.textContent=b.l;}
+}
+
+// ─────────────────────────────────────────────
+//  STATS
+// ─────────────────────────────────────────────
+function updateStats() {
+  const total   = videos.length;
+  const pending = videos.filter(v=>!isQAed(v) && !isLockedByOther(v)).length;
+  // Count approvals/rejections by combining local cache + server qa_status
+  // for videos in this session's pool. This is stable across the moment when
+  // the local cache is pruned after server confirmation.
+  const myEmail = (reviewer.email || "").toLowerCase();
+  let approved = 0, rejected = 0;
+  videos.forEach(v => {
+    const lr = localReviews[v.video_id];
+    if (lr && (lr.reviewer || "").toLowerCase() === myEmail) {
+      if (lr.action === 'Approved') approved++;
+      else if (lr.action === 'Rejected') rejected++;
+      return;
+    }
+    // No local cache — fall back to server qa_status, but only if we're the reviewer
+    if (v.qa_status && (v.qa_reviewer || "").toLowerCase() === myEmail) {
+      const a = v.qa_status.toLowerCase();
+      if (a === 'approved' || a === 'verified') approved++;
+      else if (a === 'rejected') rejected++;
+    }
+  });
+  document.getElementById('statsRow').innerHTML=`
+    <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:11px;background:rgba(255,255,255,.06);color:var(--text2);">${total} total</span>
+    <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:11px;background:rgba(59,130,246,.1);color:var(--accent2);">${pending} pending</span>
+    <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:11px;background:rgba(34,197,94,.1);color:var(--green);">${approved} ✓</span>
+    <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:11px;background:rgba(239,68,68,.1);color:var(--red);">${rejected} ✗</span>`;
+}
+
+// ─────────────────────────────────────────────
+//  PAGE NAV
+// ─────────────────────────────────────────────
+function showPage(page) {
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('[id^="snav-"]').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  if(document.getElementById(`snav-${page}`)) document.getElementById(`snav-${page}`).classList.add('active');
+  // Hide the filter/video-list sidebar on Summary so it takes the whole content area
+  const fs = document.getElementById('filterSidebar');
+  if (fs) fs.style.display = (page === 'summary') ? 'none' : '';
+  if(page==='summary'){renderSummary();populateSumFilters();}
+}
+
+// ─────────────────────────────────────────────
+//  SUMMARY
+// ─────────────────────────────────────────────
+function populateSumFilters() {
+  const ents=[...new Set(allVideos.map(v=>v.enterprise).filter(Boolean))].sort();
+  // Build reviewer set from BOTH local cache and server-confirmed qa_reviewer field
+  const seen = new Set();
+  Object.values(localReviews).forEach(r => { if (r.reviewer) seen.add(r.reviewer); });
+  allVideos.forEach(v => { if (v.qa_reviewer) seen.add(v.qa_reviewer); });
+  let revs = [...seen].sort();
+  if (!isAdmin()) revs = revs.filter(r => r.toLowerCase() === (reviewer.email || "").toLowerCase());
+  document.getElementById('sumEnt').innerHTML='<option value="">All Enterprises</option>'+ents.map(e=>`<option value="${escAttr(e)}">${escH(e)}</option>`).join('');
+  document.getElementById('sumRev').innerHTML='<option value="">All Reviewers</option>'  +revs.map(r=>`<option value="${escAttr(r)}">${escH(r)}</option>`).join('');
+}
+
+// Build the unified summary row list by merging localReviews with server qa_status.
+// A row appears once whether it lives only in local cache, only on the server, or both.
+function buildAllReviews() {
+  const byId = new Map();
+  // Start with local cache (these have the most accurate timestamp & comment)
+  Object.values(localReviews).forEach(r => {
+    byId.set(r.video_id, {
+      video_id: r.video_id,
+      action: r.action,
+      comment: r.comment || '',
+      reviewer: r.reviewer || '',
+      reviewer_name: r.reviewer_name || '',
+      timestamp: r.timestamp || '',
+      _source: 'local',
+    });
+  });
+  // Layer on server data — only add if not already present (local wins)
+  allVideos.forEach(v => {
+    if (!v.qa_status || !v.qa_status.trim()) return;
+    if (byId.has(v.video_id)) return;
+    const a = v.qa_status.toLowerCase();
+    let action = v.qa_status;
+    if (a === 'approved' || a === 'verified') action = 'Approved';
+    else if (a === 'rejected') action = 'Rejected';
+    byId.set(v.video_id, {
+      video_id: v.video_id,
+      action,
+      comment: v.qa_reason || '',
+      reviewer: v.qa_reviewer || '',
+      reviewer_name: '',
+      timestamp: v.qa_timestamp || '',
+      _source: 'server',
+    });
+  });
+  return [...byId.values()];
+}
+
+function getSumData() {
+  const ent=document.getElementById('sumEnt').value;
+  const rev=document.getElementById('sumRev').value;
+  const act=document.getElementById('sumAct').value;
+  const fr =document.getElementById('sumFrom').value;
+  const to =document.getElementById('sumTo').value;
+  let pool = buildAllReviews();
+  // Non-admin sees only their own reviews
+  if (!isAdmin()) pool = pool.filter(r=>(r.reviewer||"").toLowerCase()===(reviewer.email||"").toLowerCase());
+  return pool.filter(lr=>{
+    const v=allVideos.find(v=>v.video_id===lr.video_id)||{};
+    if(ent&&v.enterprise!==ent)  return false;
+    if(rev&&lr.reviewer !==rev)  return false;
+    if(act&&lr.action   !==act)  return false;
+    if(fr&&lr.timestamp){const d=new Date(lr.timestamp);if(d<new Date(fr))return false;}
+    if(to&&lr.timestamp){const d=new Date(lr.timestamp);if(d>new Date(to+'T23:59:59'))return false;}
+    return true;
+  });
+}
+function renderSummary() {
+  const rows=getSumData();
+  const app=rows.filter(r=>r.action==='Approved').length;
+  const rej=rows.filter(r=>r.action==='Rejected').length;
+  const rate=rows.length?Math.round(app/rows.length*100):0;
+  document.getElementById('kpiGrid').innerHTML=`
+    <div class="kpi"><div class="klbl">Total QA'd</div><div class="kval" style="color:var(--accent2)">${rows.length}</div><div class="ksub">${isAdmin()?'All reviewers':'Your reviews'}</div></div>
+    <div class="kpi"><div class="klbl">Approved</div><div class="kval" style="color:var(--green)">${app}</div><div class="ksub">${rate}% rate</div></div>
+    <div class="kpi"><div class="klbl">Rejected</div><div class="kval" style="color:var(--red)">${rej}</div><div class="ksub">${rows.length?Math.round(rej/rows.length*100):0}% rate</div></div>
+    <div class="kpi"><div class="klbl">Queue</div><div class="kval" style="color:var(--yellow)">${submitQueue.length}</div><div class="ksub">Pending sync</div></div>`;
+  document.getElementById('sumCount').textContent=`${rows.length} records`;
+  if(!rows.length){document.getElementById('sumTbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text3);">No QA reviews found</td></tr>';return;}
+  document.getElementById('sumTbody').innerHTML=rows
+    .sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))
+    .map(lr=>{
+      const v=allVideos.find(v=>v.video_id===lr.video_id)||{};
+      const b=lr.action==='Approved'
+        ?`<span class="vbadge b-verified" style="display:inline-block">✓ Approved</span>`
+        :`<span class="vbadge b-rejected" style="display:inline-block">✗ Rejected</span>`;
+      const ts=lr.timestamp?new Date(lr.timestamp).toLocaleString():'—';
+      const q=submitQueue.some(q=>q.video_id===lr.video_id)?`<span style="font-size:10px;color:var(--yellow)">⏳</span>`:'';
+      return `<tr>
+        <td class="mono">${escH(lr.video_id)}${q}</td>
+        <td>${escH(v.enterprise||'—')}</td>
+        <td class="mono">${escH(v.vin||'—')}</td>
+        <td>${b}</td>
+        <td>${escH(lr.reviewer||'—')}</td>
+        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(lr.comment||'—')}</td>
+        <td style="white-space:nowrap;">${ts}</td>
+        <td><button class="jmp" onclick="jumpTo('${escAttr(lr.video_id)}')">↗ Review</button></td>
+      </tr>`;
+    }).join('');
+}
+
+function jumpTo(vid) {
+  document.getElementById('togQAed').checked = true;
+  showPage('review');
+  applyFilter();
+  let i = filtered.findIndex(v => v.video_id === vid);
+  if (i >= 0) { loadVideoAt(i); return; }
+
+  const targetVid = allVideos.find(v => v.video_id === vid);
+  if (targetVid) {
+    if (!videos.find(v => v.video_id === vid)) {
+      const ent = targetVid.enterprise;
+      videos = ent ? allVideos.filter(v => v.enterprise === ent) : allVideos;
+      populateSidebarFilters();
+    }
+    applyFilter();
+    i = filtered.findIndex(v => v.video_id === vid);
+    if (i >= 0) { loadVideoAt(i); return; }
+  }
+
+  document.getElementById('fVid').value = vid;
+  applyFilter();
+  i = filtered.findIndex(v => v.video_id === vid);
+  if (i >= 0) loadVideoAt(i);
+  else toast('Video not found in current batch — load its enterprise first', 'warn');
+}
+
+function exportCSV() {
+  const rows=getSumData();
+  if(!rows.length){toast('No data to export','warn');return;}
+  const lines=['video_id,enterprise,vin,action,reviewer,comment,timestamp'].concat(rows.map(lr=>{
+    const v=allVideos.find(v=>v.video_id===lr.video_id)||{};
+    return [lr.video_id,v.enterprise||'',v.vin||'',lr.action,lr.reviewer||'',(lr.comment||'').replace(/,/g,' '),lr.timestamp||''].map(x=>`"${x}"`).join(',');
+  }));
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+  a.download=`qa-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast('CSV exported ✓','success');
+}
+
+// ─────────────────────────────────────────────
+//  SETTINGS — admin only (nitin.kumar@spyne.ai)
+// ─────────────────────────────────────────────
+function showSettings() {
+  if (!isAdmin()) { toast('Admin access required','error'); return; }
+  document.getElementById('settingsOverlay').classList.add('open');
+  loadCfgInputs();
+}
+function closeSettingsPanel()  { document.getElementById('settingsOverlay').classList.remove('open'); }
+function closeSettings(e)      { if(e.target===document.getElementById('settingsOverlay')) closeSettingsPanel(); }
+
+function loadCfgInputs() {
+  const els = ['cfgSheet','cfgGas','mapQcStatus','mapQcUser'];
+  if (!els.every(id=>document.getElementById(id))) return;
+  document.getElementById('cfgSheet').value    = SHEET_URL;
+  document.getElementById('cfgGas').value      = GAS_URL;
+  document.getElementById('mapQcStatus').value = colMap.qcStatus||'';
+  document.getElementById('mapQcUser').value   = colMap.qcUser  ||'';
+}
+function saveCfg() {
+  SHEET_URL=document.getElementById('cfgSheet').value.trim();
+  GAS_URL  =document.getElementById('cfgGas').value.trim();
+  lsSet('qa_sheet_url',SHEET_URL); lsSet('qa_gas_url_v2',GAS_URL);
+  // Clear any old key so it doesn't shadow the new one
+  localStorage.removeItem('qa_gas_url');
+  toast('Config saved ✓','success');
+}
+function saveColMap() {
+  colMap.qcStatus=document.getElementById('mapQcStatus').value.trim();
+  colMap.qcUser  =document.getElementById('mapQcUser').value.trim();
+  lsSet('qa_column_map',colMap);
+  toast('Column mapping saved — reload data to apply','success');
+}
+function buildFontGrid() {
+  const cur=ls('qa_font')||'geist';
+  document.getElementById('fontGrid').innerHTML=FONTS.map(f=>
+    `<div class="font-card${f.k===cur?' active':''}" onclick="pickFont('${f.k}')">
+      <div class="fn">${escH(f.lbl)}</div>
+      <div class="fp" style="font-family:${f.fam}">${f.prev}</div>
+    </div>`
+  ).join('');
+}
+function pickFont(k) { applyFont(k); lsSet('qa_font',k); buildFontGrid(); toast('Font updated ✓','success'); }
+function applyFont(k) {
+  const f=FONTS.find(f=>f.k===k);
+  if(f) document.documentElement.style.setProperty('--font-body',f.fam);
+}
+function addCF() {
+  const n=document.getElementById('cfName').value.trim();
+  const f=document.getElementById('cfField').value;
+  const v=document.getElementById('cfVal').value.trim();
+  if(!n||!v){toast('Enter name and value','error');return;}
+  customFilters.push({name:n,field:f,value:v});
+  lsSet('qa_custom_filters',customFilters);
+  document.getElementById('cfName').value=''; document.getElementById('cfVal').value='';
+  renderCFList(); renderChips(); toast('Filter saved ✓','success');
+}
+function renderCFList() {
+  const el=document.getElementById('cfList');
+  if(!el)return;
+  if(!customFilters.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);">No custom filters yet.</div>';return;}
+  el.innerHTML=customFilters.map((f,i)=>
+    `<div class="saved-item">
+      <div class="si-desc"><strong>${escH(f.name)}</strong> <span style="color:var(--text3);font-size:11px;">${escH(f.field)} = "${escH(f.value)}"</span></div>
+      <button class="btn-del" onclick="delCF(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+function delCF(i) { customFilters.splice(i,1); lsSet('qa_custom_filters',customFilters); renderCFList(); renderChips(); }
+function renderEmailMapUI() {
+  const el=document.getElementById('emailMapList');
+  if(!el)return;
+  const e=Object.entries(emailMap);
+  if(!e.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);">No mappings yet.</div>';return;}
+  el.innerHTML=e.map(([em,nm])=>
+    `<div class="saved-item">
+      <div class="si-desc"><span style="font-family:var(--mono);font-size:11px;">${escH(em)}</span> → <strong>${escH(nm)}</strong></div>
+      <button class="btn-del" onclick="delEmail('${escAttr(em)}')">✕</button>
+    </div>`
+  ).join('');
+}
+function addEmailMap() {
+  const e=document.getElementById('newEmail').value.trim().toLowerCase();
+  const n=document.getElementById('newName').value.trim();
+  if(!e||!n){toast('Enter email and name','error');return;}
+  emailMap[e]=n; lsSet('qa_email_name_map',emailMap);
+  document.getElementById('newEmail').value=''; document.getElementById('newName').value='';
+  renderEmailMapUI(); toast('Mapping saved ✓','success');
+}
+function delEmail(e) { delete emailMap[e]; lsSet('qa_email_name_map',emailMap); renderEmailMapUI(); }
+
+// ─────────────────────────────────────────────
+//  RE-APPEND MODAL
+// ─────────────────────────────────────────────
+function openReappend()  { document.getElementById('reappendId').value=''; document.getElementById('reappendResult').style.display='none'; document.getElementById('reappendModal').classList.add('open'); }
+function closeReappend() { document.getElementById('reappendModal').classList.remove('open'); }
+async function doReappend() {
+  const id=document.getElementById('reappendId').value.trim();
+  const res=document.getElementById('reappendResult');
+  res.style.display='block'; res.textContent='Processing…';
+  const targets=id?[localReviews[id]].filter(Boolean):Object.values(localReviews);
+  if(!targets.length){res.textContent='✗ No cached reviews found.';return;}
+  let ok=0,fail=0;const lines=[];
+  for(const p of targets){const r=await postToSheet(p);if(r){ok++;lines.push(`✓ ${p.video_id}`);}else{fail++;lines.push(`✗ ${p.video_id}`);}}
+  res.textContent=`Done: ${ok} OK, ${fail} failed.\n\n${lines.join('\n')}`;
+  toast(`Re-append: ${ok} OK, ${fail} failed`,ok>0?'success':'error');
+}
+function clearCache() {
+  if(!confirm('Delete all locally cached QA reviews?')) return;
+  localReviews={}; localStorage.removeItem('qa_local_reviews');
+  renderList(); updateStats(); updateBatchPill();
+  toast('Cache cleared','info');
+}
+
+// ─────────────────────────────────────────────
+//  THEME
+// ─────────────────────────────────────────────
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  lsSet('theme', document.body.classList.contains('light')?'light':'dark');
+  document.getElementById('themeIco').textContent = document.body.classList.contains('light')?'🌙':'☀';
+}
+
+// ─────────────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────────────
+let tt;
+function toast(msg,type='info') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ─────────────────────────────────────────────
+//  KEYBOARD
+// ─────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName.toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select') return;
+  if(currentPage!=='review') return;
+  if(e.key.toLowerCase()==='a') toggleAction('Approved');
+  if(e.key.toLowerCase()==='r') toggleAction('Rejected');
+  if(e.key==='Escape')          clearAction();
+  if(e.key==='Enter')           submitReview();
+  if(e.key==='ArrowLeft' ||e.key==='ArrowUp')   goPrev();
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')  goNext();
+});
+
+// Auto-release claims on tab close (best effort)
+window.addEventListener('beforeunload', () => {
+  const unfinished = [...claimedIds].filter(id => !localReviews[id]);
+  if (unfinished.length > 0 && navigator.sendBeacon && reviewer.email) {
+    try {
+      navigator.sendBeacon(GAS_URL, JSON.stringify({
+        action:'release', video_ids:unfinished, reviewer:reviewer.email,
+        timestamp:new Date().toISOString()
+      }));
+    } catch(e) {}
+  }
+});
+
+// When tab becomes visible again, refresh immediately
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && pollTimer) {
+    pollTick();
+  }
+});
+
+  // ─── END ORIGINAL VIDEO QA SCRIPT ───
+
+  // Expose every onclick-referenced handler (and a few helpers) on window.vqa
+  // so the inline onclick="vqa.foo()" attributes can find them.
+  const _exposed = {
+    // login flow (kept for completeness; activate() bypasses login)
+    doLogin, acceptHint, logout,
+    // top-level navigation
+    showEntScreen, showPage, toggleSidebar, toggleTheme, reloadData,
+    // enterprise picker
+    entSync, claimBatch, resetLocalCache, runDiagnostics, renderEntList,
+    // filters
+    applyFilter, clearFilters, setDate, applyCF, removeCF,
+    // review actions
+    goPrev, goNext, toggleAction, clearAction, toggleReason, submitReview,
+    loadVideoAt, jumpTo, flushQueue,
+    // summary
+    renderSummary, exportCSV,
+    // settings
+    showSettings, closeSettings, closeSettingsPanel,
+    addCF, delCF, addEmailMap, delEmail,
+    openReappend, closeReappend, doReappend, clearCache,
+    saveCfg, saveColMap, pickFont,
+  };
+  window.vqa = Object.assign(window.vqa || {}, _exposed);
+
+  // Public lifecycle for the host (Spyne QC) to control the Video QA panel.
+  window.VideoQA = {
+    _initialized: false,
+    activate(spyneUser) {
+      const root = document.getElementById('videoQAContainer');
+      if (!root) return;
+      // Auto-fill reviewer from Spyne's logged-in user. PWDS keys look like
+      // "First Last" — derive a stable email "first.last@spyne.ai".
+      if (spyneUser) {
+        const slug = String(spyneUser).trim().toLowerCase().replace(/\s+/g, '.');
+        const fakeEmail = slug + '@spyne.ai';
+        try {
+          localStorage.setItem(
+            'qa_reviewer',
+            JSON.stringify({ name: spyneUser, email: fakeEmail })
+          );
+        } catch (e) {}
+      }
+      root.classList.remove('hidden');
+      if (!this._initialized) {
+        try { init(); } catch (e) { console.error('[VideoQA] init failed:', e); }
+        this._initialized = true;
+      } else {
+        // Already initialized — refresh data on re-entry.
+        try { if (typeof reloadData === 'function') reloadData(); } catch (e) {}
+      }
+    },
+    deactivate() {
+      const root = document.getElementById('videoQAContainer');
+      if (root) root.classList.add('hidden');
+      // Best-effort: stop polling so background fetches don't run while hidden.
+      try { if (typeof stopPolling === 'function') stopPolling(); } catch (e) {}
+    },
+  };
+})();
+</script>
+</body>
+</html>
