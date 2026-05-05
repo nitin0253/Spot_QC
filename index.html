@@ -351,7 +351,10 @@ tr:hover td{background:var(--bg2)}
    the area below the topbar (top:52px), so the two never overlap. */
 .vqa-root{position:fixed;top:52px;bottom:30px;left:0;right:0;z-index:40;background:var(--bg);}
 .vqa-root.hidden{display:none!important;}
-.vqa-root .screen{position:absolute!important;}
+/* Issue #7+#15 fix: scrollable .screen so entScreen content (logo +
+   ent-card + Load All Pending) never gets cropped at any zoom level. */
+.vqa-root .screen{position:absolute!important;overflow-y:auto!important;padding:24px 0;align-items:center;}
+.vqa-root .ent-card{max-height:none!important;flex-shrink:0;margin:auto 0;}
 .vqa-root .shell{height:100%!important;}
 /* Topbar buttons that should hide while on Video QA mode */
 body.vqa-mode .btn-qc-status,
@@ -359,32 +362,56 @@ body.vqa-mode .topbar > a.btn-top-link,
 body.vqa-mode .topbar > .btn-sm:last-of-type,
 body.vqa-mode #doneCounter,
 body.vqa-mode .bottom-ribbon{display:none!important;}
-/* When on Video QA, give it the full bottom of the screen since
-   bottom-ribbon is hidden. */
 body.vqa-mode .vqa-root{bottom:0;}
 /* Issue #3 fix: Spyne's .toast{animation:tIn .22s ease both} locks the
    element at transform:none forever (fill-mode 'both'), which defeats
-   Video QA's transform-based slide-out. Disable that animation for our
-   own toast so the .show class controls visibility cleanly. */
+   Video QA's transform-based slide-out. */
 .vqa-root .toast{animation:none!important;}
-/* Re-QA button styling (added in action bar for QA'd videos) */
+/* Issue #12 fix: explicit @keyframes spin (defensive — also handled by
+   the CSS transformer skip-whitespace fix, but cheap to keep). */
+@keyframes spin{to{transform:rotate(360deg);}}
+/* Issue #13: hover-open the sidebar in addition to click-toggle */
+.vqa-root .left-sidebar:hover{width:var(--sidebar-open-w);}
+.vqa-root .left-sidebar:hover .sidebar-logo,
+.vqa-root .left-sidebar:hover .snav-label,
+.vqa-root .left-sidebar:hover .rev-name{opacity:1;}
+/* Issue #14: keep sidebar visible on home (entScreen) too. The .screen
+   covers the area to the right of the sidebar instead of the full width. */
+.vqa-root .screen{left:var(--sidebar-w)!important;}
+.vqa-root .left-sidebar{position:absolute!important;left:0;top:0;bottom:0;z-index:300;}
+/* Re-QA button styling */
 .vqa-root .btn-reqa{background:#7e22ce;color:#fff;border:none;padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:none;align-items:center;gap:5px;transition:background .15s;}
 .vqa-root .btn-reqa.visible{display:inline-flex;}
 .vqa-root .btn-reqa:hover{background:#9333ea;}
-/* Issue #1 fix: hide the pendency/QA'd list sidebar when reviewing a
-   single video that was opened from the Summary page. Toggled by the
-   .vqa-root.qad-jump body class. */
+/* Issue #5 fix: hide Approve/Reject/Submit/Clear when reviewing a QA'd
+   video (the .qad-mode flag on the action-row is set by renderMeta). */
+.vqa-root .action-row.qad-mode .btn-approve,
+.vqa-root .action-row.qad-mode .btn-reject,
+.vqa-root .action-row.qad-mode .btn-clear-sel,
+.vqa-root .action-row.qad-mode .btn-submit{display:none!important;}
+/* Issue #1 fix: hide pendency sidebar when jumped from Summary */
 .vqa-root.qad-jump .filter-sidebar{display:none!important;}
 /* Auto-sync indicator pulse */
 .vqa-root .sync-indicator{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--text3);margin-left:8px;}
 .vqa-root .sync-indicator .dot{width:6px;height:6px;border-radius:50%;background:var(--green);transition:background .3s;}
 .vqa-root .sync-indicator.syncing .dot{background:var(--accent2);animation:vqa-pulse 1s ease-in-out infinite;}
 @keyframes vqa-pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
-/* Make QA review fields more prominent in the meta panel */
+/* QA decision boxes in meta panel */
 .vqa-root .qa-rejection-box{margin-top:8px;padding:9px 11px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:7px;font-size:11.5px;color:var(--red);line-height:1.4;}
 .vqa-root .qa-rejection-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);opacity:.8;margin-bottom:3px;}
 .vqa-root .qa-approval-box{margin-top:8px;padding:9px 11px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:7px;font-size:11.5px;color:var(--green);line-height:1.4;}
 .vqa-root .qa-approval-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);opacity:.8;margin-bottom:3px;}
+/* Issue #10: scrollable, multi-line summary detail cell */
+.vqa-root .sum-detail{max-width:280px;max-height:80px;overflow-y:auto;white-space:normal;font-size:11px;line-height:1.45;padding:4px 0;}
+.vqa-root .sum-detail .qc-line{color:var(--yellow);margin-bottom:4px;}
+.vqa-root .sum-detail .qa-line{color:var(--text);}
+.vqa-root .sum-detail .lbl{display:inline-block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.7;margin-right:4px;}
+/* Issue #8: Video QA bottom ribbon, visible in both themes */
+.vqa-root .vqa-ribbon{position:absolute;bottom:0;left:0;right:0;height:26px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:500;color:var(--text2);background:var(--bg1);border-top:1px solid var(--border2);z-index:55;pointer-events:none;letter-spacing:.02em;}
+.vqa-root.light .vqa-ribbon{color:#475569;background:#e2e8f0;border-top-color:#cbd5e1;}
+.vqa-root .shell,.vqa-root .screen{padding-bottom:26px;}
+/* Issue #3 (font color in dark): bump contrast for body text */
+.vqa-root:not(.light){--text:#f1f5f9;--text2:#cbd5e1;--text3:#94a3b8;}
 
 /* ── GRAY + BLUE THEME ── */
 .vqa-root {
@@ -1001,7 +1028,7 @@ body.vqa-mode .vqa-root{bottom:0;}
   display:flex;align-items:center;justify-content:center;z-index:10;border-radius:10px;
 }
 .vqa-root .spin{width:26px;height:26px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
-.vqa-root @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes spin{to{transform:rotate(360deg);}}
 .vqa-root .no-vid{color:var(--text3);text-align:center;}
 .vqa-root .no-vid span{font-size:28px;display:block;margin-bottom:7px;}
 
@@ -1214,6 +1241,7 @@ body.vqa-mode .vqa-root{bottom:0;}
 
 <!-- ════════════════ VIDEO QA — scoped container ════════════════ -->
 <div class="vqa-root hidden" id="videoQAContainer">
+  <div class="vqa-ribbon">made with ♥ for us</div>
 <!-- ══════════ ENTERPRISE PICKER ══════════ -->
 <div class="screen hidden" id="entScreen">
   <div class="app-logo">⬡ VIDEO QC REVIEW</div>
@@ -1339,10 +1367,10 @@ body.vqa-mode .vqa-root{bottom:0;}
             <option value="done">◉ Done</option>
           </select>
           <div class="frow">
-            <input id="fVid" placeholder="Video ID…"/>
-            <input id="fVin" placeholder="VIN…"/>
+            <input id="fVid" placeholder="Video ID…" oninput="vqa.applyFilter()"/>
+            <input id="fVin" placeholder="VIN…" oninput="vqa.applyFilter()"/>
           </div>
-          <input id="fSku" placeholder="SKU…"/>
+          <input id="fSku" placeholder="SKU…" oninput="vqa.applyFilter()"/>
           <div class="frow">
             <button class="btn-apply" onclick="vqa.applyFilter()">Apply</button>
             <button class="btn-clear" onclick="vqa.clearFilters()">Clear</button>
@@ -1441,7 +1469,7 @@ body.vqa-mode .vqa-root{bottom:0;}
               </div>
               <div style="overflow-x:auto;">
                 <table>
-                  <thead><tr><th>Video ID</th><th>Enterprise</th><th>VIN</th><th>Action</th><th>Reviewer</th><th>Comment</th><th>Timestamp</th><th></th></tr></thead>
+                  <thead><tr><th>Video ID</th><th>Enterprise</th><th>VIN</th><th>Action</th><th>Reviewer</th><th>QC + QA Notes</th><th>Timestamp</th><th></th></tr></thead>
                   <tbody id="sumTbody"></tbody>
                 </table>
               </div>
@@ -1620,7 +1648,7 @@ function prefetch(src) {
   const i = new Image(); i.src = src;
 }
 
-const PWDS = {"Nand Kishor":"spyne@123","Ranbir Manoranjan":"spyne@123","Nitin Kumar":"nitin@123","Praveen Agarwal":"spyne@123","Raj Tripathi":"spyne@123","Rohit Chauhan":"spyne@123","Ajay Devrani":"spyne@123"};
+const PWDS = {"Nand Kishor":"spyne@123","Ranbir Manoranjan":"spyne@123","Nitin Kumar":"spyne@123","Praveen Agarwal":"spyne@123","Raj Tripathi":"spyne@123","Rohit Chauhan":"spyne@123","Ajay Devrani":"spyne@123"};
 
 function _id(id){ return document.getElementById(id); }
 
@@ -2344,6 +2372,9 @@ let allVideos    = [];
 let videos       = [];
 let filtered     = [];
 let claimedIds   = new Set();
+/* Issue #9: track videos the user just Re-QA'd so they stay out of the
+   QA'd filter and the Summary view until a fresh decision is made. */
+let reqaBlacklist = new Set();
 let currentIdx   = -1;
 let currentAction= null;
 let dateFilter   = 'all';
@@ -2367,11 +2398,19 @@ function init() {
   emailMap      = JSON.parse(ls('qa_email_name_map') || '{}');
   colMap        = JSON.parse(ls('qa_column_map')     || '{"qcStatus":"","qcUser":""}');
   claimedIds    = new Set(JSON.parse(ls('qa_claimed_ids') || '[]'));
+  reqaBlacklist = new Set(JSON.parse(ls('qa_reqa_blacklist') || '[]'));
   if (ls('qa_sheet_url')) SHEET_URL = ls('qa_sheet_url');
   // Use 'qa_gas_url_v2' so the old cached URL from previous deployments is ignored.
   // (The script's /exec URL changed when redeployed as a new deployment.)
   if (ls('qa_gas_url_v2'))   GAS_URL   = ls('qa_gas_url_v2');
-  if (ls('theme') === 'light') { const _r = document.getElementById('videoQAContainer'); if (_r) _r.classList.add('light'); }
+  /* Issue #4: default to LIGHT theme on first load. */
+{ const _r = document.getElementById('videoQAContainer');
+  const _stored = ls('theme');
+  const _useLight = (_stored === 'light') || (_stored == null);
+  if (_r && _useLight) _r.classList.add('light');
+  /* sync the theme icon to current state */
+  const _ico = document.getElementById('themeIco');
+  if (_ico) _ico.textContent = _useLight ? '🌙' : '☀'; }
   applyFont(ls('qa_font') || 'geist');
   buildFontGrid();
   renderCFList();
@@ -2443,13 +2482,36 @@ function acceptHint() {
 /* removed: loginName keydown handler */
 function logout() {
   stopPolling();
-  // Release any claimed videos so others can pick them up
+  // Issue #2: use sendBeacon for guaranteed delivery during the
+  // page-unload caused by location.reload(). The previous postToSheet()
+  // (async fetch) was being aborted before it reached the server, so
+  // the videos stayed locked under the logged-out user.
   if (claimedIds.size > 0 && reviewer.email) {
-    postToSheet({action:'release', video_ids:[...claimedIds], reviewer:reviewer.email, timestamp:new Date().toISOString()});
+    const payload = JSON.stringify({
+      action: 'release',
+      video_ids: [...claimedIds],
+      reviewer: reviewer.email,
+      timestamp: new Date().toISOString(),
+    });
+    let beaconOk = false;
+    try {
+      if (navigator.sendBeacon) {
+        beaconOk = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'}));
+      }
+    } catch (e) { beaconOk = false; }
+    if (!beaconOk) {
+      /* fallback: synchronous-ish keepalive fetch then short delay */
+      try {
+        fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true,
+          headers:{'Content-Type':'text/plain'}, body:payload});
+      } catch (e) {}
+    }
   }
-  localStorage.removeItem('qa_reviewer');
+  /* Don't clear qa_reviewer here — Spyne's host is the source of truth
+     for identity. We just clear claim state and reload. */
   localStorage.removeItem('qa_claimed_ids');
-  location.reload();
+  /* Give the beacon ~250ms to flush before reload tears down the page. */
+  setTimeout(() => location.reload(), 250);
 }
 
 // ─────────────────────────────────────────────
@@ -2770,6 +2832,8 @@ function entSync() {
 //  QA CHECK
 // ─────────────────────────────────────────────
 function isQAed(v) {
+  /* Issue #9: a Re-QA'd video is treated as pending until resubmitted */
+  if (reqaBlacklist.has(v.video_id) && !localReviews[v.video_id]) return false;
   if (v.qa_state === 'done') return true;
   return !!(v.qa_status && v.qa_status.trim()) || !!localReviews[v.video_id];
 }
@@ -3263,9 +3327,9 @@ function applyFilter(cfObj) {
     if (ent    && v.enterprise!==ent)   return false;
     if (user   && v.qc_user  !==user)   return false;
     if (status && v.status   !==status) return false;
-    if (vidId  && !v.video_id.toLowerCase().includes(vidId)) return false;
-    if (vin    && !v.vin.toLowerCase().includes(vin))        return false;
-    if (sku    && !v.sku.toLowerCase().includes(sku))        return false;
+    if (vidId  && !(v.video_id||'').toLowerCase().includes(vidId)) return false;
+    if (vin    && !(v.vin     ||'').toLowerCase().includes(vin))   return false;
+    if (sku    && !(v.sku     ||'').toLowerCase().includes(sku))   return false;
     if (!matchDate(v)) return false;
     if (cf) {
       if (cf.field==='status'     && v.status    !==cf.value) return false;
@@ -3381,6 +3445,14 @@ function loadVideoAt(idx) {
   if (idx<0||idx>=filtered.length) return;
   currentIdx=idx; currentAction=null;
   clearActionUI();
+  /* Issue #5: toggle qad-mode on action-row */
+  const _v_for_qad = filtered[idx];
+  const _wasQAd = !!(_v_for_qad && (
+    (_v_for_qad.qa_status && _v_for_qad.qa_status.trim()) ||
+    (localReviews[_v_for_qad.video_id])
+  ));
+  const _row = document.querySelector('.action-row');
+  if (_row) _row.classList.toggle('qad-mode', _wasQAd);
 
   const v=filtered[idx];
   const lr=localReviews[v.video_id];
@@ -3568,6 +3640,11 @@ async function submitReview() {
 
   localReviews[v.video_id]=payload;
   lsSet('qa_local_reviews',localReviews);
+  /* Issue #9: clear blacklist entry — fresh decision overrides the reset */
+  if (reqaBlacklist.has(v.video_id)) {
+    reqaBlacklist.delete(v.video_id);
+    lsSet('qa_reqa_blacklist', [...reqaBlacklist]);
+  }
 
   updateListItemBadge(currentIdx, currentAction, true);
   updateStats(); updateBatchPill();
@@ -3606,14 +3683,17 @@ function startReQA() {
                'review will overwrite the previous decision in the sheet.')) {
     return;
   }
+  /* Issue #9: persist a blacklist entry so this video stays out of QA'd
+     and Summary even after the next polling refresh brings the old
+     qa_status back. */
+  reqaBlacklist.add(v.video_id);
+  lsSet('qa_reqa_blacklist', [...reqaBlacklist]);
   /* Wipe local + queued state for this video so the action bar starts clean */
   delete localReviews[v.video_id];
   lsSet('qa_local_reviews', localReviews);
   submitQueue = submitQueue.filter(q => q.video_id !== v.video_id);
   lsSet('qa_submit_queue', submitQueue);
-  /* Optimistically clear the QA fields locally so the video shows up in
-     pendency immediately. The actual sheet row gets rewritten on the next
-     submitReview() (postToSheet upserts by video_id). */
+  /* Optimistically clear the QA fields locally */
   v.qa_status = ''; v.qa_reason = ''; v.qa_reviewer = '';
   v.qa_timestamp = ''; v.qa_state = '';
   const all = allVideos.find(a => a.video_id === v.video_id);
@@ -3621,6 +3701,17 @@ function startReQA() {
     all.qa_status = ''; all.qa_reason = ''; all.qa_reviewer = '';
     all.qa_timestamp = ''; all.qa_state = '';
   }
+  /* Best-effort server reset (Apps Script may or may not honor empty action;
+     blacklist is the durable client-side guarantee). */
+  postToSheet({
+    action: 'submit',
+    video_id: v.video_id,
+    qa_action: '__RESET__',
+    comment: '',
+    reviewer: reviewer.email,
+    reviewer_name: reviewer.name || '',
+    timestamp: new Date().toISOString(),
+  });
   /* Switch back to pendency view */
   document.getElementById('togQAed').checked = false;
   const _r = document.getElementById('videoQAContainer');
@@ -3629,7 +3720,6 @@ function startReQA() {
   currentAction = null;
   clearActionUI();
   applyFilter();
-  /* Try to keep this video selected for re-marking */
   const i = filtered.findIndex(vv => vv.video_id === v.video_id);
   if (i >= 0) loadVideoAt(i);
   toast('QA reset — mark the issues and submit to overwrite', 'info');
@@ -3778,6 +3868,8 @@ function buildAllReviews() {
   allVideos.forEach(v => {
     if (!v.qa_status || !v.qa_status.trim()) return;
     if (byId.has(v.video_id)) return;
+    /* Issue #9: skip Re-QA'd videos */
+    if (reqaBlacklist.has(v.video_id)) return;
     const a = v.qa_status.toLowerCase();
     let action = v.qa_status;
     if (a === 'approved' || a === 'verified') action = 'Approved';
@@ -3835,13 +3927,21 @@ function renderSummary() {
         :`<span class="vbadge b-rejected" style="display:inline-block">✗ Rejected</span>`;
       const ts=lr.timestamp?new Date(lr.timestamp).toLocaleString():'—';
       const q=submitQueue.some(q=>q.video_id===lr.video_id)?`<span style="font-size:10px;color:var(--yellow)">⏳</span>`:'';
+      const qcReason = (v.reason || '').trim();
+      const qaComment = (lr.comment || '').trim();
+      const detailParts = [];
+      if (qcReason)  detailParts.push(`<div class="qc-line"><span class="lbl">QC:</span>${escH(qcReason)}</div>`);
+      if (qaComment) detailParts.push(`<div class="qa-line"><span class="lbl">QA:</span>${escH(qaComment)}</div>`);
+      const detail = detailParts.length
+        ? `<div class="sum-detail">${detailParts.join('')}</div>`
+        : '<span style="color:var(--text3);">—</span>';
       return `<tr>
         <td class="mono">${escH(lr.video_id)}${q}</td>
         <td>${escH(v.enterprise||'—')}</td>
         <td class="mono">${escH(v.vin||'—')}</td>
         <td>${b}</td>
         <td>${escH(lr.reviewer||'—')}</td>
-        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(lr.comment||'—')}</td>
+        <td>${detail}</td>
         <td style="white-space:nowrap;">${ts}</td>
         <td><button class="jmp" onclick="vqa.jumpTo('${escAttr(lr.video_id)}')">↗ Review</button></td>
       </tr>`;
@@ -3937,7 +4037,13 @@ function buildFontGrid() {
 function pickFont(k) { applyFont(k); lsSet('qa_font',k); buildFontGrid(); toast('Font updated ✓','success'); }
 function applyFont(k) {
   const f=FONTS.find(f=>f.k===k);
-  if(f) document.documentElement.style.setProperty('--font-body',f.fam);
+  if (!f) return;
+  /* Issue #6: vars are scoped to .vqa-root, not :root */
+  const root = document.getElementById('videoQAContainer');
+  if (root) {
+    root.style.setProperty('--font-body', f.fam);
+    root.style.setProperty('--sans',      f.fam);
+  }
 }
 function addCF() {
   const n=document.getElementById('cfName').value.trim();
