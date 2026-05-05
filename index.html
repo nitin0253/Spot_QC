@@ -362,6 +362,29 @@ body.vqa-mode .bottom-ribbon{display:none!important;}
 /* When on Video QA, give it the full bottom of the screen since
    bottom-ribbon is hidden. */
 body.vqa-mode .vqa-root{bottom:0;}
+/* Issue #3 fix: Spyne's .toast{animation:tIn .22s ease both} locks the
+   element at transform:none forever (fill-mode 'both'), which defeats
+   Video QA's transform-based slide-out. Disable that animation for our
+   own toast so the .show class controls visibility cleanly. */
+.vqa-root .toast{animation:none!important;}
+/* Re-QA button styling (added in action bar for QA'd videos) */
+.vqa-root .btn-reqa{background:#7e22ce;color:#fff;border:none;padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:none;align-items:center;gap:5px;transition:background .15s;}
+.vqa-root .btn-reqa.visible{display:inline-flex;}
+.vqa-root .btn-reqa:hover{background:#9333ea;}
+/* Issue #1 fix: hide the pendency/QA'd list sidebar when reviewing a
+   single video that was opened from the Summary page. Toggled by the
+   .vqa-root.qad-jump body class. */
+.vqa-root.qad-jump .filter-sidebar{display:none!important;}
+/* Auto-sync indicator pulse */
+.vqa-root .sync-indicator{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--text3);margin-left:8px;}
+.vqa-root .sync-indicator .dot{width:6px;height:6px;border-radius:50%;background:var(--green);transition:background .3s;}
+.vqa-root .sync-indicator.syncing .dot{background:var(--accent2);animation:vqa-pulse 1s ease-in-out infinite;}
+@keyframes vqa-pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+/* Make QA review fields more prominent in the meta panel */
+.vqa-root .qa-rejection-box{margin-top:8px;padding:9px 11px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:7px;font-size:11.5px;color:var(--red);line-height:1.4;}
+.vqa-root .qa-rejection-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);opacity:.8;margin-bottom:3px;}
+.vqa-root .qa-approval-box{margin-top:8px;padding:9px 11px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:7px;font-size:11.5px;color:var(--green);line-height:1.4;}
+.vqa-root .qa-approval-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);opacity:.8;margin-bottom:3px;}
 
 /* ── GRAY + BLUE THEME ── */
 .vqa-root {
@@ -1249,7 +1272,7 @@ body.vqa-mode .vqa-root{bottom:0;}
     </div>
 
     <div class="sidebar-nav">
-      <button class="snav-item active" id="snav-review" onclick="vqa.showPage('review')">
+      <button class="snav-item active" id="snav-review" onclick="vqa.gotoReview()">
         <span class="sico">▶</span><span class="snav-label">Review</span>
       </button>
       <button class="snav-item" id="snav-summary" onclick="vqa.showPage('summary')">
@@ -1288,6 +1311,7 @@ body.vqa-mode .vqa-root{bottom:0;}
       <div class="header-right">
         <span class="batch-pill" id="batchPill" style="display:none" onclick="vqa.showEntScreen()">— batch</span>
         <div class="queue-badge synced" id="queueBadge" onclick="vqa.flushQueue()">✓ Synced</div>
+        <span class="sync-indicator" id="syncIndicator" title="Auto-syncs every 12s"><span class="dot"></span><span id="syncStatus">—</span></span>
         <button class="icon-btn" id="refreshBtn" onclick="vqa.reloadData()" title="Sync data from sheet">↻</button>
       </div>
     </div>
@@ -1373,6 +1397,7 @@ body.vqa-mode .vqa-root{bottom:0;}
               <button class="btn-reject"  id="btnReject"  onclick="vqa.toggleAction('Rejected')">✗ Reject <span class="kbd">R</span></button>
               <button class="btn-clear-sel" id="btnClearSel" onclick="vqa.clearAction()">✕ Clear</button>
               <button class="btn-submit"  id="btnSubmit"  onclick="vqa.submitReview()" disabled>Submit <span class="kbd">↵</span></button>
+              <button class="btn-reqa" id="btnReQA" onclick="vqa.startReQA()" title="Reset QA status and re-mark this video">↺ Re-QA</button>
             </div>
             <div class="cmt-row">
               <textarea class="cmt-area" id="comment" placeholder="Add comment or rejection reason…"></textarea>
@@ -2491,6 +2516,11 @@ let lastLoadError = null;
 async function loadAllData() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spinning');
+  /* Issue #5: visible auto-sync indicator */
+  const _ind = document.getElementById('syncIndicator');
+  const _ist = document.getElementById('syncStatus');
+  if (_ind) _ind.classList.add('syncing');
+  if (_ist) _ist.textContent = 'syncing…';
   const entBtn = document.getElementById('entSyncBtn');
   if (entBtn) entBtn.classList.add('spinning');
   lastLoadError = null;
@@ -2565,6 +2595,17 @@ async function loadAllData() {
   } finally {
     btn.classList.remove('spinning');
     if (entBtn) entBtn.classList.remove('spinning');
+    /* Issue #5: indicator cleanup */
+    const _ind2 = document.getElementById('syncIndicator');
+    const _ist2 = document.getElementById('syncStatus');
+    if (_ind2) _ind2.classList.remove('syncing');
+    if (_ist2) {
+      const t = new Date();
+      _ist2.textContent = (lastLoadError ? 'error' : 'synced ' +
+        String(t.getHours()).padStart(2,'0') + ':' +
+        String(t.getMinutes()).padStart(2,'0') + ':' +
+        String(t.getSeconds()).padStart(2,'0'));
+    }
   }
 }
 
@@ -3383,20 +3424,58 @@ function renderMeta(v) {
      eff==='done'?'var(--accent2)':'var(--text3)';
   const syncNote=inQ?`<div style="margin-top:5px;font-size:11px;color:var(--yellow)">⏳ Pending sync</div>`
     :lr?`<div style="margin-top:5px;font-size:11px;color:var(--green)">✓ Synced</div>`:'';
-  const qcDisp=v.qa_status||v.qc_status||'—';
+  const qcStat = v.qc_status || v.status || '';
+  const qcDisp = qcStat || '—';
   const owner = lockOwner(v);
   const ownerNote = owner && reviewer.email && owner.toLowerCase() === reviewer.email.toLowerCase()
     ? `<div style="margin-top:5px;font-size:11px;color:var(--accent2)">🔒 Claimed by you</div>`
     : '';
+
+  /* ── Issue #1 fix: explicit, prominent QA decision + comments ── */
+  const qaDecision = (v.qa_status || '').trim();
+  const qaReason   = (v.qa_reason || '').trim();      // QA reviewer's reject comment
+  const qcReject   = (v.reason    || '').trim();      // QC pipeline's reject comment
+  const qaTime     = v.qa_timestamp ? new Date(v.qa_timestamp).toLocaleString() : '';
+  const isQAApproved = qaDecision.toLowerCase() === 'approved';
+  const isQARejected = qaDecision.toLowerCase() === 'rejected';
+
+  let qaBlock = '';
+  if (isQAApproved) {
+    qaBlock = `
+      <div class="qa-approval-box">
+        <div class="qa-lbl">QA Decision</div>
+        <div style="font-size:13px;font-weight:600;">✓ Approved by ${escH(v.qa_reviewer || 'reviewer')}</div>
+        ${qaTime ? `<div style="margin-top:3px;font-size:10.5px;opacity:.85;">${escH(qaTime)}</div>` : ''}
+        ${qaReason ? `<div style="margin-top:6px;font-size:11px;color:var(--text);">Note: ${escH(qaReason)}</div>` : ''}
+      </div>`;
+  } else if (isQARejected) {
+    qaBlock = `
+      <div class="qa-rejection-box">
+        <div class="qa-lbl">QA Decision</div>
+        <div style="font-size:13px;font-weight:600;">✗ Rejected by ${escH(v.qa_reviewer || 'reviewer')}</div>
+        ${qaTime ? `<div style="margin-top:3px;font-size:10.5px;opacity:.85;">${escH(qaTime)}</div>` : ''}
+        ${qaReason ? `<div style="margin-top:6px;font-size:11.5px;color:var(--text);">Comment: ${escH(qaReason)}</div>`
+                   : `<div style="margin-top:6px;font-size:11px;opacity:.7;">(no comment provided)</div>`}
+      </div>`;
+  }
+
+  /* QC's own rejected_reason — relevant whenever it exists */
+  const qcRejectBlock = qcReject ? `
+    <div class="qa-rejection-box" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);color:var(--yellow);">
+      <div class="qa-lbl" style="color:var(--yellow);">QC Rejection Reason</div>
+      <div style="margin-top:3px;font-size:11.5px;color:var(--text);">${escH(qcReject)}</div>
+    </div>` : '';
+
   document.getElementById('metaPane').innerHTML=`
-    <div class="m-label">QA Status</div>
+    <div class="m-label">Current Status</div>
     <div class="m-box">
       <div class="cap">Review Decision</div>
       <div class="status-row"><div class="sdot" style="background:${dot}"></div><div class="stext" style="color:${dot}">${escH(eff||'Pending Review')}</div></div>
-      ${v.reason?`<div style="margin-top:5px;font-size:11px;color:var(--text3)">Reason: ${escH(v.reason)}</div>`:''}
       ${syncNote}
       ${ownerNote}
     </div>
+    ${qaBlock}
+    ${qcRejectBlock}
     <div class="m-label">QC Status</div>
     <div class="m-box">
       <div class="cap">QC Processing</div>
@@ -3414,6 +3493,14 @@ function renderMeta(v) {
     <div class="divider"></div>
     <div class="m-label">Timestamps</div>
     ${mRow('Created',v.created)}${mRow('Updated',v.updated)}`;
+
+  /* ── Issue #2: show / hide the Re-QA button based on whether this video
+     has already been QA'd. Only relevant when the user is viewing an
+     already-decided record (the typical entry path is from Summary). ── */
+  const reqaBtn = document.getElementById('btnReQA');
+  if (reqaBtn) {
+    reqaBtn.classList.toggle('visible', isQAApproved || isQARejected);
+  }
 }
 const mRow=(k,v,m=false)=>`<div class="m-row"><div class="m-key">${k}</div><div class="m-val${m?' mono':''}">${escH(v||'—')}</div></div>`;
 
@@ -3505,6 +3592,50 @@ async function submitReview() {
   else if (currentIdx<filtered.length-1) goNext();
 }
 
+function startReQA() {
+  if (currentIdx < 0 || currentIdx >= filtered.length) return;
+  const v = filtered[currentIdx];
+  if (!v) return;
+  const had = !!(v.qa_status && v.qa_status.trim());
+  if (!had) {
+    toast('This video has not been QA\'d yet — nothing to reset', 'warn');
+    return;
+  }
+  if (!confirm('Reset the QA decision for this video?\n\n' +
+               'It will move back to the pendency list. Submitting a new\n' +
+               'review will overwrite the previous decision in the sheet.')) {
+    return;
+  }
+  /* Wipe local + queued state for this video so the action bar starts clean */
+  delete localReviews[v.video_id];
+  lsSet('qa_local_reviews', localReviews);
+  submitQueue = submitQueue.filter(q => q.video_id !== v.video_id);
+  lsSet('qa_submit_queue', submitQueue);
+  /* Optimistically clear the QA fields locally so the video shows up in
+     pendency immediately. The actual sheet row gets rewritten on the next
+     submitReview() (postToSheet upserts by video_id). */
+  v.qa_status = ''; v.qa_reason = ''; v.qa_reviewer = '';
+  v.qa_timestamp = ''; v.qa_state = '';
+  const all = allVideos.find(a => a.video_id === v.video_id);
+  if (all) {
+    all.qa_status = ''; all.qa_reason = ''; all.qa_reviewer = '';
+    all.qa_timestamp = ''; all.qa_state = '';
+  }
+  /* Switch back to pendency view */
+  document.getElementById('togQAed').checked = false;
+  const _r = document.getElementById('videoQAContainer');
+  if (_r) _r.classList.remove('qad-jump');
+  /* Reset action UI and reapply filter */
+  currentAction = null;
+  clearActionUI();
+  applyFilter();
+  /* Try to keep this video selected for re-marking */
+  const i = filtered.findIndex(vv => vv.video_id === v.video_id);
+  if (i >= 0) loadVideoAt(i);
+  toast('QA reset — mark the issues and submit to overwrite', 'info');
+  updateStats();
+}
+
 function findNextPending(from) {
   for(let i=from+1;i<filtered.length;i++) if(!isQAed(filtered[i])) return i;
   return -1;
@@ -3591,6 +3722,15 @@ function updateStats() {
 // ─────────────────────────────────────────────
 //  PAGE NAV
 // ─────────────────────────────────────────────
+function gotoReview() {
+  /* Issue #4: reset to pendency view when entering Review via sidebar nav. */
+  document.getElementById('togQAed').checked = false;
+  const _r = document.getElementById('videoQAContainer');
+  if (_r) _r.classList.remove('qad-jump');
+  applyFilter();
+  showPage('review');
+}
+
 function showPage(page) {
   currentPage=page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -3710,6 +3850,11 @@ function renderSummary() {
 
 function jumpTo(vid) {
   document.getElementById('togQAed').checked = true;
+  /* Issue #1: hide the side panel of pendency when reviewing a QA'd video
+     that was opened from the Summary page. The .qad-jump class on .vqa-root
+     drives a CSS rule that hides .filter-sidebar. */
+  const _r = document.getElementById('videoQAContainer');
+  if (_r) _r.classList.add('qad-jump');
   showPage('review');
   applyFilter();
   let i = filtered.findIndex(v => v.video_id === vid);
@@ -3927,14 +4072,14 @@ document.addEventListener('visibilitychange', () => {
     // login flow (kept for completeness; activate() bypasses login)
     doLogin, acceptHint, logout,
     // top-level navigation
-    showEntScreen, showPage, toggleSidebar, toggleTheme, reloadData,
+    showEntScreen, showPage, gotoReview, toggleSidebar, toggleTheme, reloadData,
     // enterprise picker
     entSync, claimBatch, resetLocalCache, runDiagnostics, renderEntList,
     // filters
     applyFilter, clearFilters, setDate, applyCF, removeCF,
     // review actions
     goPrev, goNext, toggleAction, clearAction, toggleReason, submitReview,
-    loadVideoAt, jumpTo, flushQueue,
+    loadVideoAt, jumpTo, flushQueue, startReQA,
     // summary
     renderSummary, exportCSV,
     // settings
