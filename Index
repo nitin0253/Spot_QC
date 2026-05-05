@@ -1523,7 +1523,7 @@ tr:hover td{background:var(--bg2)}
 <div class="toast" id="toast"></div>
 </div>
 
-<div class="bottom-ribbon">Managed by <a href="mailto:kishor@spyne.ai">kishor@spyne.ai</a></div>
+<div class="bottom-ribbon">Made with <a href="<3">"<3"</a></div>
 <div class="toast-shelf" id="toastShelf"></div>
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
