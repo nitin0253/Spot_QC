@@ -349,34 +349,40 @@ tr:hover td{background:var(--bg2)}
    (settings panel, reappend modal, toast) render above the topbar.
    The topbar mode pills stay clickable because .vqa-root only covers
    the area below the topbar (top:52px), so the two never overlap. */
-.vqa-root{position:fixed;top:52px;bottom:30px;left:0;right:0;z-index:40;background:var(--bg);}
+.vqa-root{position:fixed;top:52px;bottom:30px;left:0;right:0;z-index:40;background:var(--bg);/* Round-6 #1+#4: set color and font-family on .vqa-root itself so
+   all descendants inherit from our scoped vars rather than from
+   Spyne's outer body (which is Inter + dark navy). */color:var(--text);font-family:var(--font-body);}
 .vqa-root.hidden{display:none!important;}
-/* ── ARCHITECTURE NOTE ──
-   The original Video QA HTML nests .left-sidebar inside .shell:
-     .vqa-root > .shell > .left-sidebar + .main-area
-   .shell is in normal flow at full size; entScreen overlays as
-   position:absolute;inset:0. To keep the sidebar visible on the home
-   page, we offset entScreen's left edge by the sidebar width so the
-   sidebar peeks out — the sidebar stays in its native flex flow
-   inside .shell, no abs-positioning needed. We bump sidebar z-index
-   to outrank the original (which used z:50) AND make .shell taller
-   than .vqa-root so the sidebar isn't visually clipped. ── */
+/* Round-6 #1: also force inheritance on headings & form controls so
+   browser UA defaults can't override. */
+.vqa-root h1,.vqa-root h2,.vqa-root h3,.vqa-root h4,.vqa-root h5,.vqa-root h6{color:inherit!important;font-family:inherit!important;}
+.vqa-root button,.vqa-root input,.vqa-root select,.vqa-root textarea{font-family:inherit;}
+/* Round-6 #6: dark mode = warm dark grey, NOT dark navy. Override
+   the original :root vars (which got transformed to .vqa-root in
+   dark mode). User-requested base color #1f1f1e. */
+.vqa-root:not(.light){--bg:#1f1f1e;--surface:#2a2a29;--surface2:#33332f;--surface3:#3d3d39;--surface4:#494945;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);--text:#f1f5f9;--text2:#cbd5e1;--text3:#94a3b8;--bg1:#252523;--bg0:#1a1a19;--line:rgba(255,255,255,0.08);--line2:rgba(255,255,255,0.14);}
+/* ── ARCHITECTURE NOTE: sidebar in flex flow inside .shell ── */
 .vqa-root .shell{height:100%!important;padding-bottom:26px!important;box-sizing:border-box;}
-/* Issue #1: sidebar must outrank entScreen overlay (z:200). Original
-   .left-sidebar{z-index:50}; we override with !important since source
-   order would otherwise let the original win. */
-.vqa-root .left-sidebar{z-index:250!important;background:var(--surface)!important;}
-/* Issue #1: hide Home button on entScreen (we're already on home) */
-.vqa-root.on-home button.snav-item[onclick*="showEntScreen"]{display:none!important;}
-/* Issue #7+#15: scrollable .screen so entScreen content (logo +
-   ent-card) never gets cropped at any zoom level. Offset the LEFT
-   edge by sidebar-w so the sidebar peeks through. */
+/* Sidebar must outrank entScreen (z:200). */
+.vqa-root .left-sidebar{z-index:250!important;}
+/* Round-6 #3: GLASS EFFECT on the sidebar. Translucent surface +
+   backdrop-filter blur. Falls back gracefully on browsers without
+   backdrop-filter — they get a plain semi-transparent surface. */
+.vqa-root .left-sidebar{background:rgba(42,42,41,.55)!important;backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-right:1px solid rgba(255,255,255,.08)!important;}
+.vqa-root.light .left-sidebar{background:rgba(255,255,255,.55)!important;border-right:1px solid rgba(15,23,42,.08)!important;}
+/* Round-6 #2 + #5: hide Home AND Review buttons when on home page */
+.vqa-root.on-home button.snav-item[onclick*="showEntScreen"],
+.vqa-root.on-home button#snav-review,
+.vqa-root.on-home button.snav-item[onclick*="gotoReview"]{display:none!important;}
+/* Issue #7+#15: scrollable .screen, offset for sidebar */
 .vqa-root .screen{position:absolute!important;overflow-y:auto!important;padding:24px 0;align-items:center;left:var(--sidebar-w)!important;right:0!important;top:0!important;bottom:0!important;}
-/* Issue #2: restore the original max-height behavior on .ent-card so
-   only the inner list scrolls (not the whole card). This keeps the
-   header/search/filter/counts/footer always visible. */
+/* Restore original max-height behavior on .ent-card */
 .vqa-root .ent-card{max-height:calc(100vh - 180px);display:flex;flex-direction:column;flex-shrink:0;margin:auto 0;}
 .vqa-root .ent-card .ent-list{flex:1;overflow-y:auto;min-height:120px;}
+/* Round-6 #3: GLASS EFFECT on settings panel. */
+.vqa-root .settings-panel{background:rgba(42,42,41,.7)!important;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border-left:1px solid rgba(255,255,255,.1)!important;}
+.vqa-root.light .settings-panel{background:rgba(255,255,255,.7)!important;border-left:1px solid rgba(15,23,42,.08)!important;}
+.vqa-root .settings-overlay{background:rgba(0,0,0,.35)!important;}
 /* Topbar buttons that should hide while on Video QA mode */
 body.vqa-mode .btn-qc-status,
 body.vqa-mode .topbar > a.btn-top-link,
@@ -384,12 +390,10 @@ body.vqa-mode .topbar > .btn-sm:last-of-type,
 body.vqa-mode #doneCounter,
 body.vqa-mode .bottom-ribbon{display:none!important;}
 body.vqa-mode .vqa-root{bottom:0;}
-/* Issue #3 fix: Spyne's .toast{animation:tIn .22s ease both} locks the
-   element at transform:none forever. */
+/* Toast animation override */
 .vqa-root .toast{animation:none!important;}
-/* Spinner animation */
 @keyframes spin{to{transform:rotate(360deg);}}
-/* Issue #13: hover-open the sidebar */
+/* Sidebar hover-open */
 .vqa-root .left-sidebar:hover{width:var(--sidebar-open-w);}
 .vqa-root .left-sidebar:hover .sidebar-logo,
 .vqa-root .left-sidebar:hover .snav-label,
@@ -398,13 +402,12 @@ body.vqa-mode .vqa-root{bottom:0;}
 .vqa-root .btn-reqa{background:#7e22ce;color:#fff;border:none;padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:none;align-items:center;gap:5px;transition:background .15s;}
 .vqa-root .btn-reqa.visible{display:inline-flex;}
 .vqa-root .btn-reqa:hover{background:#9333ea;}
-/* Issue #5 (round 4): hide Approve/Reject/Submit/Clear when reviewing
-   a QA'd video */
+/* Hide Approve/Reject when reviewing QA'd video */
 .vqa-root .action-row.qad-mode .btn-approve,
 .vqa-root .action-row.qad-mode .btn-reject,
 .vqa-root .action-row.qad-mode .btn-clear-sel,
 .vqa-root .action-row.qad-mode .btn-submit{display:none!important;}
-/* Issue #1 fix: hide pendency sidebar when jumped from Summary */
+/* Hide pendency sidebar when jumped from Summary */
 .vqa-root.qad-jump .filter-sidebar{display:none!important;}
 /* Auto-sync indicator pulse */
 .vqa-root .sync-indicator{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--text3);margin-left:8px;}
@@ -416,26 +419,18 @@ body.vqa-mode .vqa-root{bottom:0;}
 .vqa-root .qa-rejection-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);opacity:.8;margin-bottom:3px;}
 .vqa-root .qa-approval-box{margin-top:8px;padding:9px 11px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:7px;font-size:11.5px;color:var(--green);line-height:1.4;}
 .vqa-root .qa-approval-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);opacity:.8;margin-bottom:3px;}
-/* Issue #5 (round 5): visible QC reason in QA'd-video meta — uses the
-   yellow box rendered by renderMeta; here we ensure styles render. */
+/* QC rejection box */
 .vqa-root .qc-rejection-box{margin-top:8px;padding:9px 11px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:7px;font-size:11.5px;color:var(--yellow);line-height:1.4;}
 .vqa-root .qc-rejection-box .qa-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--yellow);opacity:.85;margin-bottom:3px;}
-/* Issue #10: scrollable summary detail cell */
+/* Scrollable summary detail cell */
 .vqa-root .sum-detail{max-width:280px;max-height:80px;overflow-y:auto;white-space:normal;font-size:11px;line-height:1.45;padding:4px 0;}
 .vqa-root .sum-detail .qc-line{color:var(--yellow);margin-bottom:4px;}
 .vqa-root .sum-detail .qa-line{color:var(--text);}
 .vqa-root .sum-detail .lbl{display:inline-block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.7;margin-right:4px;}
-/* Issue #3 (round 5): made-with-love ribbon must outrank shell content
-   (which can have non-transparent backgrounds) so it's always visible.
-   #6 in this round: align ribbon edges with sidebar so it spans the
-   full width of the bottom of the panel. */
+/* Made-with-love ribbon */
 .vqa-root .vqa-ribbon{position:absolute;bottom:0;left:0;right:0;height:26px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:500;color:var(--text2);background:var(--bg1);border-top:1px solid var(--border2);z-index:260;pointer-events:none;letter-spacing:.02em;}
 .vqa-root.light .vqa-ribbon{color:#475569;background:#e2e8f0;border-top-color:#cbd5e1;}
-/* Padding-bottom for screen too so its content doesn't scroll under
-   the ribbon. */
 .vqa-root .screen{padding-bottom:26px;}
-/* Issue #3 (round 4): bump dark-mode text contrast */
-.vqa-root:not(.light){--text:#f1f5f9;--text2:#cbd5e1;--text3:#94a3b8;}
 
 /* ── GRAY + BLUE THEME ── */
 .vqa-root {
@@ -1264,6 +1259,9 @@ body.vqa-mode .vqa-root{bottom:0;}
 
 
 <!-- ════════════════ VIDEO QA — scoped container ════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600;700&family=Urbanist:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Fraunces:wght@400;500;600;700&display=swap">
 <div class="vqa-root hidden" id="videoQAContainer">
   <div class="vqa-ribbon">made with ♥ for us</div>
 <!-- ══════════ ENTERPRISE PICKER ══════════ -->
@@ -2380,12 +2378,23 @@ const ADMIN_EMAIL = "nitin.kumar@spyne.ai";
 const POLL_INTERVAL_MS = 12000;
 
 const FONTS = [
+  /* Modern geometric sans */
   {k:'geist',       lbl:'Geist',         fam:"'Geist',sans-serif",          prev:'Aa Bb 123'},
+  {k:'inter',       lbl:'Inter',         fam:"'Inter',sans-serif",          prev:'Aa Bb 123'},
+  {k:'manrope',     lbl:'Manrope',       fam:"'Manrope',sans-serif",        prev:'Aa Bb 123'},
+  /* Friendly humanist */
   {k:'dm-sans',     lbl:'DM Sans',       fam:"'DM Sans',sans-serif",        prev:'Aa Bb 123'},
+  {k:'plus-jakarta',lbl:'Plus Jakarta',  fam:"'Plus Jakarta Sans',sans-serif",prev:'Aa Bb 123'},
+  {k:'outfit',      lbl:'Outfit',        fam:"'Outfit',sans-serif",         prev:'Aa Bb 123'},
+  /* Geometric / display */
   {k:'space-grot',  lbl:'Space Grotesk', fam:"'Space Grotesk',sans-serif",  prev:'Aa Bb 123'},
   {k:'sora',        lbl:'Sora',          fam:"'Sora',sans-serif",           prev:'Aa Bb 123'},
-  {k:'outfit',      lbl:'Outfit',        fam:"'Outfit',sans-serif",         prev:'Aa Bb 123'},
+  {k:'urbanist',    lbl:'Urbanist',      fam:"'Urbanist',sans-serif",       prev:'Aa Bb 123'},
+  /* Technical / mono-leaning */
   {k:'ibm-plex',    lbl:'IBM Plex Sans', fam:"'IBM Plex Sans',sans-serif",  prev:'Aa Bb 123'},
+  {k:'jetbrains',   lbl:'JetBrains Mono',fam:"'JetBrains Mono',monospace",  prev:'Aa Bb 123'},
+  /* Serif for variety */
+  {k:'fraunces',    lbl:'Fraunces',      fam:"'Fraunces',serif",            prev:'Aa Bb 123'},
 ];
 
 // ─────────────────────────────────────────────
