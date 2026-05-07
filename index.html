@@ -379,6 +379,15 @@ tr:hover td{background:var(--bg2)}
 /* Restore original max-height behavior on .ent-card */
 .vqa-root .ent-card{max-height:calc(100vh - 180px);display:flex;flex-direction:column;flex-shrink:0;margin:auto 0;}
 .vqa-root .ent-card .ent-list{flex:1;overflow-y:auto;min-height:120px;}
+/* ── ROUND 7 #2: pin the 'VIDEO QC REVIEW' header to the top of the
+   scrolling entScreen so it stays visible while the user scrolls
+   through the enterprise list. position:sticky stays in flex flow
+   when content fits, and pins to top:0 once the user scrolls past it.
+   We also need to ensure the parent .screen has its scroll container
+   established (already overflow-y:auto from above) and the logo has
+   a solid bg so list items don't bleed through it. */
+.vqa-root #entScreen .app-logo{position:sticky;top:0;z-index:5;width:100%;text-align:center;padding:14px 0 12px;margin-bottom:8px;background:var(--bg);/* slight blur + bottom shadow for depth when content scrolls under */
+backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 /* Round-6 #3: GLASS EFFECT on settings panel. */
 .vqa-root .settings-panel{background:rgba(42,42,41,.7)!important;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border-left:1px solid rgba(255,255,255,.1)!important;}
 .vqa-root.light .settings-panel{background:rgba(255,255,255,.7)!important;border-left:1px solid rgba(15,23,42,.08)!important;}
@@ -2485,6 +2494,9 @@ function showScreen(id) {
 function hideScreens() {
   /* loginScreen removed */
   document.getElementById('entScreen').classList.add('hidden');
+  /* Round 7 #1: clear home mode whenever we hide the entScreen */
+  const _r_hide = document.getElementById('videoQAContainer');
+  if (_r_hide) _r_hide.classList.remove('on-home');
 }
 
 // ─────────────────────────────────────────────
