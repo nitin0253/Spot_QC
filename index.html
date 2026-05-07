@@ -370,10 +370,16 @@ tr:hover td{background:var(--bg2)}
    backdrop-filter — they get a plain semi-transparent surface. */
 .vqa-root .left-sidebar{background:rgba(42,42,41,.55)!important;backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-right:1px solid rgba(255,255,255,.08)!important;}
 .vqa-root.light .left-sidebar{background:rgba(255,255,255,.55)!important;border-right:1px solid rgba(15,23,42,.08)!important;}
-/* Round-6 #2 + #5: hide Home AND Review buttons when on home page */
-.vqa-root.on-home button.snav-item[onclick*="showEntScreen"],
-.vqa-root.on-home button#snav-review,
-.vqa-root.on-home button.snav-item[onclick*="gotoReview"]{display:none!important;}
+/* ── ROUND 9: Home + Review buttons visible ONLY during an active
+   review session. The session starts when the user successfully claims
+   videos via Start QA / Load All Pending (claimBatch happy path),
+   and ends when they click Home (showEntScreen). Browsing Summary
+   from the home page WITHOUT starting a session leaves both buttons
+   hidden. The .in-review class on .vqa-root drives this. */
+.vqa-root:not(.in-review) #snav-home,
+.vqa-root:not(.in-review) #snav-review,
+/* legacy: also catch the old onclick-targeted Home button if any */
+.vqa-root:not(.in-review) button.snav-item[onclick*="showEntScreen"]{display:none!important;}
 /* ── ROUND 8 #2: entScreen layout = vertical flex column.
    - app-logo (header) sits at top, fixed height
    - ent-card flexes to fill remaining space, height bounded by parent
@@ -2488,9 +2494,6 @@ function setReviewer() {
   document.getElementById('snav-settings').style.display = isAdmin() ? '' : 'none';
 }
 function showScreen(id) {
-  /* on-home reflects entScreen visibility */
-  const _r = document.getElementById('videoQAContainer');
-  if (_r) _r.classList.toggle('on-home', id === 'entScreen');
   ['entScreen'].forEach(s => {  /* loginScreen removed; host provides login */
     document.getElementById(s).classList.toggle('hidden', s !== id);
   });
@@ -2498,9 +2501,6 @@ function showScreen(id) {
 function hideScreens() {
   /* loginScreen removed */
   document.getElementById('entScreen').classList.add('hidden');
-  /* Round 7 #1: clear home mode whenever we hide the entScreen */
-  const _r_hide = document.getElementById('videoQAContainer');
-  if (_r_hide) _r_hide.classList.remove('on-home');
 }
 
 // ─────────────────────────────────────────────
@@ -3196,6 +3196,9 @@ async function claimBatch(enterprise) {
   claimedIds = new Set(claimed);
   lsSet('qa_claimed_ids', [...claimedIds]);
   lastClaimAt = Date.now();
+  /* Round 9: review session has officially started — show Home + Review */
+  const _r_inrev = document.getElementById('videoQAContainer');
+  if (_r_inrev) _r_inrev.classList.add('in-review');
 
   // OPTIMIZATION: Don't refetch the whole sheet — server already told us which
   // IDs we got. Mark them locally as claimed-by-us so the UI is correct without
@@ -3291,11 +3294,16 @@ async function claimBatch(enterprise) {
 }
 
 function _setHomeMode(on) {
+  /* Legacy alias kept for any callers still using the old name. */
   const r = document.getElementById('videoQAContainer');
-  if (r) r.classList.toggle('on-home', !!on);
+  if (!r) return;
+  if (on) r.classList.remove('in-review');
 }
 function showEntScreen() {
-  _setHomeMode(true);
+  /* Round 9: leaving review session — clear .in-review so Home + Review
+     buttons hide. */
+  const _r_es = document.getElementById('videoQAContainer');
+  if (_r_es) _r_es.classList.remove('in-review');
   // Auto-release current claims that the user hasn't QA'd yet
   const unfinished = [...claimedIds].filter(id => !localReviews[id]);
   if (unfinished.length > 0) {
@@ -3881,16 +3889,10 @@ function gotoReview() {
 }
 
 function showPage(page) {
-  /* Round 8 #1: when called from the home page (e.g. user clicks Summary
-     in the sidebar), the entScreen overlay sits at z:200 above .shell, so
-     the new page's content stays hidden behind it. Hide entScreen here
-     unconditionally — that also clears .on-home via the showScreen-style
-     path we patched in round 7. The entScreen.classList.add('hidden') is
-     safe even when entScreen is already hidden. */
+  /* Round 9: hide entScreen so non-home page content is visible. Do NOT
+     touch .in-review — the user clicking Summary while pre-session must
+     keep Home + Review buttons hidden. */
   document.getElementById('entScreen').classList.add('hidden');
-  const _r_sp = document.getElementById('videoQAContainer');
-  if (_r_sp) _r_sp.classList.remove('on-home');
-
   currentPage=page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('[id^="snav-"]').forEach(t=>t.classList.remove('active'));
