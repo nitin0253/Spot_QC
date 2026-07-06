@@ -380,8 +380,8 @@ tr:hover td{background:var(--bg2)}
    the user is looking at the Summary page, even if no review session
    has started yet — otherwise there'd be no way back to the picker.
    The .on-summary class (toggled in showPage()) drives that override. */
-.vqa-root:not(.in-review) #snav-home,
 .vqa-root:not(.in-review) #snav-review{display:none!important;}
+.vqa-root:not(.in-review):not(.on-summary) #snav-home,
 .vqa-root:not(.in-review):not(.on-summary) button.snav-item[onclick*="showEntScreen"]{display:none!important;}
 /* ── ROUND 8 #2: entScreen layout = vertical flex column.
    - app-logo (header) sits at top, fixed height
