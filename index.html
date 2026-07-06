@@ -1317,9 +1317,8 @@ body.vqa-mode .vqa-root{bottom:0;}
         <option value="rejected">✗ Rejected</option>
       </select>
     </div>
-    <div class="ent-search-row" style="gap:8px;">
-      <input type="date" class="ent-search" id="entDateFrom" onchange="vqa.renderEntList()" style="flex:1;" title="From date"/>
-      <input type="date" class="ent-search" id="entDateTo" onchange="vqa.renderEntList()" style="flex:1;" title="To date"/>
+    <div class="ent-search-row">
+      <input class="ent-search" id="entDateRange" placeholder="📅 Select date range…" autocomplete="off" readonly/>
     </div>
     <div class="ent-total" id="entTotalBox">
       <span class="lbl" id="entTotalLbl">Total available pending QA</span>
@@ -2447,6 +2446,7 @@ let colMap       = {qcStatus:'',qcUser:''};
 let currentPage  = 'review';
 let curEnterprise= null;
 let sidebarOpen  = false;
+let entFp        = null; // flatpickr instance for the Home page date-range filter
 
 // ─────────────────────────────────────────────
 //  INIT
@@ -2477,6 +2477,7 @@ function init() {
   renderEmailMapUI();
   loadCfgInputs();
   updateQueueBadge();
+  initEntDatePicker();
 
   const saved = ls('qa_reviewer');
   if (saved) {
@@ -3007,13 +3008,41 @@ async function runDiagnostics() {
   }
 }
 
-// Get the videos matching the current enterprise-screen filters (search, user, verified_status, date range).
+// Single-calendar date-range picker for the Home page filter (Metabase-style:
+// click once for start, again for end, both in the same popup calendar).
+function initEntDatePicker() {
+  const el = document.getElementById('entDateRange');
+  if (!el || entFp) return;
+  entFp = flatpickr(el, {
+    mode: 'range',
+    dateFormat: 'Y-m-d',
+    altInput: true,
+    altFormat: 'M j, Y',
+    altInputClass: 'ent-search',
+    defaultDate: null,
+    onClose: () => renderEntList(),
+  });
+}
+
+// Reads the currently selected range from the Home page date picker.
+// Returns {from:'', to:''} (both blank) when nothing is selected yet.
+function getEntDateRange() {
+  if (!entFp || !entFp.selectedDates || !entFp.selectedDates.length) return { from: '', to: '' };
+  const dates = entFp.selectedDates;
+  const toYMD = d => d.toISOString().split('T')[0];
+  const from = dates[0] ? toYMD(dates[0]) : '';
+  // Single date picked (range not yet closed) → treat it as both bounds so
+  // the filter narrows to that one day instead of doing nothing.
+  const to = dates[1] ? toYMD(dates[1]) : from;
+  return { from, to };
+}
+
+
 // Use this for both rendering counts and deciding what to claim.
 function getEntFilteredVideos() {
   const userF   = (document.getElementById('entFilterUser')?.value   || '').trim().toLowerCase();
   const statusF = (document.getElementById('entFilterStatus')?.value || '').trim().toLowerCase();
-  const fromF   = document.getElementById('entDateFrom')?.value || '';
-  const toF     = document.getElementById('entDateTo')?.value || '';
+  const { from: fromF, to: toF } = getEntDateRange();
   return allVideos.filter(v => {
     if (userF   && (v.qc_user || '').trim().toLowerCase() !== userF)   return false;
     if (statusF && (v.status  || '').trim().toLowerCase() !== statusF) return false;
@@ -3154,8 +3183,7 @@ async function claimBatch(enterprise) {
   // Otherwise keep the enterprise-only path (faster on the server side).
   const userF   = (document.getElementById('entFilterUser')?.value   || '').trim().toLowerCase();
   const statusF = (document.getElementById('entFilterStatus')?.value || '').trim().toLowerCase();
-  const fromF   = (document.getElementById('entDateFrom')?.value || '');
-  const toF     = (document.getElementById('entDateTo')?.value || '');
+  const { from: fromF, to: toF } = getEntDateRange();
   const hasFilters = !!(userF || statusF || fromF || toF);
   if (hasFilters) {
     const matching = allVideos.filter(v => {
