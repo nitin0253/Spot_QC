@@ -426,6 +426,11 @@ body.vqa-mode .bottom-ribbon{display:none!important;}
 body.vqa-mode .vqa-root{bottom:0;}
 /* Toast animation override */
 .vqa-root .toast{animation:none!important;}
+/* Explicit text-selection colors — without this, the browser's default
+   selection highlight (a light/near-white background) collides with the
+   app's own text colors in dark mode, making selected rows unreadable. */
+.vqa-root ::selection{background:var(--accent);color:#fff;}
+.vqa-root ::-moz-selection{background:var(--accent);color:#fff;}
 @keyframes spin{to{transform:rotate(360deg);}}
 /* Sidebar hover-open */
 .vqa-root .left-sidebar:hover{width:var(--sidebar-open-w);}
