@@ -927,6 +927,7 @@ body.vqa-mode .vqa-root{bottom:0;}
 .vqa-root .kpi .klbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;}
 .vqa-root .kpi .kval{font-size:24px;font-weight:700;font-family:var(--mono);}
 .vqa-root .kpi .ksub{font-size:10px;color:var(--text3);}
+.vqa-root .sum-page > *{flex-shrink:0;}
 .vqa-root .tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden;}
 .vqa-root .tbl-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .vqa-root .tbl-head span{font-size:13px;font-weight:500;}
@@ -2516,7 +2517,10 @@ function init() {
   renderEmailMapUI();
   loadCfgInputs();
   updateQueueBadge();
-  initEntDatePicker();
+  // Guarded: if flatpickr hasn't loaded yet (slow network, blocked CDN,
+  // ad-blocker, etc.) this must NOT abort the rest of init() — reviewer
+  // loading and data fetch below are essential and have to run regardless.
+  try { initEntDatePicker(); } catch (e) { console.error('[VideoQA] date picker init failed (non-fatal):', e); }
 
   const saved = ls('qa_reviewer');
   if (saved) {
