@@ -375,11 +375,14 @@ tr:hover td{background:var(--bg2)}
    videos via Start QA / Load All Pending (claimBatch happy path),
    and ends when they click Home (showEntScreen). Browsing Summary
    from the home page WITHOUT starting a session leaves both buttons
-   hidden. The .in-review class on .vqa-root drives this. */
+   hidden. The .in-review class on .vqa-root drives this.
+   EXCEPTION (requested): the Home button must stay visible any time
+   the user is looking at the Summary page, even if no review session
+   has started yet — otherwise there'd be no way back to the picker.
+   The .on-summary class (toggled in showPage()) drives that override. */
 .vqa-root:not(.in-review) #snav-home,
-.vqa-root:not(.in-review) #snav-review,
-/* legacy: also catch the old onclick-targeted Home button if any */
-.vqa-root:not(.in-review) button.snav-item[onclick*="showEntScreen"]{display:none!important;}
+.vqa-root:not(.in-review) #snav-review{display:none!important;}
+.vqa-root:not(.in-review):not(.on-summary) button.snav-item[onclick*="showEntScreen"]{display:none!important;}
 /* ── ROUND 8 #2: entScreen layout = vertical flex column.
    - app-logo (header) sits at top, fixed height
    - ent-card flexes to fill remaining space, height bounded by parent
@@ -1119,7 +1122,7 @@ body.vqa-mode .vqa-root{bottom:0;}
       <select id="loginName" class="field-in">
         <option value="">— Select —</option>
         <option>Nand Kishor</option><option>Ranbir Manoranjan</option><option>Nitin Kumar</option>
-        <option>Praveen Agarwal</option><option>Raj Tripathi</option><option>Rohit Chauhan</option><option>Ajay Devrani</option>
+        <option>Praveen Agarwal</option><option>Raj Tripathi</option><option>Rohit Chauhan</option><option>Ajay Devrani</option><option>Shweta Gupta</option>
       </select>
     </div>
     <div class="field">
@@ -1290,7 +1293,7 @@ body.vqa-mode .vqa-root{bottom:0;}
     <div class="ent-head">
       <div>
         <h2>Home</h2>
-        <p class="sub">Pick an enterprise to start QA, or filter by user / verified status.</p>
+        <p class="sub">Pick an enterprise to start QA, or filter by user / verified status / date.</p>
       </div>
       <div class="ent-head-actions">
         <button class="ent-head-btn" id="entSyncBtn" onclick="vqa.entSync()" title="Sync data from sheet">
@@ -1313,6 +1316,10 @@ body.vqa-mode .vqa-root{bottom:0;}
         <option value="verified">✓ Verified</option>
         <option value="rejected">✗ Rejected</option>
       </select>
+    </div>
+    <div class="ent-search-row" style="gap:8px;">
+      <input type="date" class="ent-search" id="entDateFrom" onchange="vqa.renderEntList()" style="flex:1;" title="From date"/>
+      <input type="date" class="ent-search" id="entDateTo" onchange="vqa.renderEntList()" style="flex:1;" title="To date"/>
     </div>
     <div class="ent-total" id="entTotalBox">
       <span class="lbl" id="entTotalLbl">Total available pending QA</span>
@@ -1359,7 +1366,7 @@ body.vqa-mode .vqa-root{bottom:0;}
       <button class="snav-item" id="snav-settings" onclick="vqa.showSettings()" style="display:none;">
         <span class="sico">⚙</span><span class="snav-label">Settings</span>
       </button>
-      <button class="snav-item" onclick="vqa.showEntScreen()">
+      <button class="snav-item" id="snav-home" onclick="vqa.showEntScreen()">
         <span class="sico">⌂</span><span class="snav-label">Home</span>
       </button>
       <button class="snav-item" onclick="vqa.toggleTheme()">
@@ -1479,6 +1486,7 @@ body.vqa-mode .vqa-root{bottom:0;}
                 <div class="reason" onclick="vqa.toggleReason(this,'Data Issue')">Data</div>
                 <div class="reason" onclick="vqa.toggleReason(this,'Image Selection Issue')">Image Selection</div>
                 <div class="reason" onclick="vqa.toggleReason(this,'Repeated Images')">Repeated Images</div>
+                <div class="reason" onclick="vqa.toggleReason(this,'Text overlapping')">Text overlapping</div>
               </div>
             </div>
           </div>
@@ -1689,7 +1697,7 @@ function prefetch(src) {
   const i = new Image(); i.src = src;
 }
 
-const PWDS = {"Nand Kishor":"spyne@123","Ranbir Manoranjan":"spyne@123","Nitin Kumar":"spyne@123","Praveen Agarwal":"spyne@123","Raj Tripathi":"spyne@123","Rohit Chauhan":"spyne@123","Ajay Devrani":"spyne@123"};
+const PWDS = {"Nand Kishor":"spyne@123","Shweta Gupta":"shweta@12345","Ranbir Manoranjan":"spyne@123","Nitin Kumar":"spyne@123","Praveen Agarwal":"spyne@123","Raj Tripathi":"spyne@123","Rohit Chauhan":"spyne@123","Ajay Devrani":"spyne@123"};
 
 function _id(id){ return document.getElementById(id); }
 
@@ -2999,14 +3007,24 @@ async function runDiagnostics() {
   }
 }
 
-// Get the videos matching the current enterprise-screen filters (search, user, verified_status).
+// Get the videos matching the current enterprise-screen filters (search, user, verified_status, date range).
 // Use this for both rendering counts and deciding what to claim.
 function getEntFilteredVideos() {
   const userF   = (document.getElementById('entFilterUser')?.value   || '').trim().toLowerCase();
   const statusF = (document.getElementById('entFilterStatus')?.value || '').trim().toLowerCase();
+  const fromF   = document.getElementById('entDateFrom')?.value || '';
+  const toF     = document.getElementById('entDateTo')?.value || '';
   return allVideos.filter(v => {
     if (userF   && (v.qc_user || '').trim().toLowerCase() !== userF)   return false;
     if (statusF && (v.status  || '').trim().toLowerCase() !== statusF) return false;
+    if (fromF || toF) {
+      const raw = v.created || v.updated;
+      if (!raw) return false;
+      const d = new Date(raw);
+      if (isNaN(d)) return false;
+      if (fromF && d < new Date(fromF + 'T00:00:00')) return false;
+      if (toF   && d > new Date(toF   + 'T23:59:59')) return false;
+    }
     return true;
   });
 }
@@ -3022,7 +3040,7 @@ function renderEntList() {
       users.map(u=>`<option value="${escAttr(u)}">${escH(u)}</option>`).join('');
   }
 
-  // Apply user + verified_status filters
+  // Apply user + verified_status + date-range filters
   const filtered = getEntFilteredVideos();
 
   const map = {};
@@ -3131,17 +3149,27 @@ async function claimBatch(enterprise) {
     reviewer: reviewer.email,
     timestamp: new Date().toISOString(),
   };
-  // If the user has the QC user / verified_status filters set, pass an
+  // If the user has the QC user / verified_status / date filters set, pass an
   // explicit list of video_ids so the server only claims matching rows.
   // Otherwise keep the enterprise-only path (faster on the server side).
   const userF   = (document.getElementById('entFilterUser')?.value   || '').trim().toLowerCase();
   const statusF = (document.getElementById('entFilterStatus')?.value || '').trim().toLowerCase();
-  const hasFilters = !!(userF || statusF);
+  const fromF   = (document.getElementById('entDateFrom')?.value || '');
+  const toF     = (document.getElementById('entDateTo')?.value || '');
+  const hasFilters = !!(userF || statusF || fromF || toF);
   if (hasFilters) {
     const matching = allVideos.filter(v => {
       if (enterprise && v.enterprise !== enterprise) return false;
       if (userF   && (v.qc_user || '').trim().toLowerCase() !== userF)   return false;
       if (statusF && (v.status  || '').trim().toLowerCase() !== statusF) return false;
+      if (fromF || toF) {
+        const raw = v.created || v.updated;
+        if (!raw) return false;
+        const d = new Date(raw);
+        if (isNaN(d)) return false;
+        if (fromF && d < new Date(fromF + 'T00:00:00')) return false;
+        if (toF   && d > new Date(toF   + 'T23:59:59')) return false;
+      }
       if (isQAed(v) || isLockedByOther(v)) return false;
       return true;
     });
@@ -3889,9 +3917,7 @@ function gotoReview() {
 }
 
 function showPage(page) {
-  /* Round 9: hide entScreen so non-home page content is visible. Do NOT
-     touch .in-review — the user clicking Summary while pre-session must
-     keep Home + Review buttons hidden. */
+  /* Round 9: hide entScreen so non-home page content is visible. */
   document.getElementById('entScreen').classList.add('hidden');
   currentPage=page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -3901,6 +3927,12 @@ function showPage(page) {
   // Hide the filter/video-list sidebar on Summary so it takes the whole content area
   const fs = document.getElementById('filterSidebar');
   if (fs) fs.style.display = (page === 'summary') ? 'none' : '';
+  /* Requested fix: keep the Home button visible whenever the user is on the
+     Summary page, even if they never started a review session (no
+     .in-review yet) — otherwise there'd be no way back to the picker. The
+     .on-summary class drives a CSS override on the Home button only. */
+  const _r2 = document.getElementById('videoQAContainer');
+  if (_r2) _r2.classList.toggle('on-summary', page === 'summary');
   if(page==='summary'){renderSummary();populateSumFilters();}
 }
 
